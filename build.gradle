@@ -1,0 +1,38 @@
+apply plugin: 'java'
+apply plugin: 'maven'
+apply plugin: 'idea'
+
+apply plugin:'application'
+
+mainClassName = "com.github.weaselworks.myo.driver.MyoApplication"
+
+group = 'com.github.weaselworks.myo'
+version = '0.0.1'
+
+description = 'Myo Java API'
+
+sourceCompatibility = 1.7
+targetCompatibility = 1.7
+
+configurations.all {
+}
+
+repositories {
+        
+     maven { url "https://oss.sonatype.org/content/repositories/snapshots" }
+     maven { url "http://repo.maven.apache.org/maven2" }
+     jcenter()
+     maven { url "http://maven.thingml.org/thingml-release/" }
+     maven { url "http://maven.irisa.fr/artifactory/list/kevoree-libs-release-cache" }
+     maven { url 'http://nexus.root1.de/content/repositories/releases/' }
+}
+
+dependencies{
+     compile 'org.slf4j:slf4j-api:1.7.5'
+     compile 'org.thingml:bglib-protocol-1.0.3-43:1.1.0'
+     compile 'org.thingml:bglib-gui:1.1.0'
+     compile 'de.root1:rxtx-rebundled:2.1-7r2-4'
+     compile 'commons-io:commons-io:2.4'
+
+}
+

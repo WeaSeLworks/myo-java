@@ -45,3 +45,9 @@ local.properties
 /target
 /javah.bat
 .DS_Store
+
+# Intellij project files
+*.iml
+*.ipr
+*.iws
+.idea/

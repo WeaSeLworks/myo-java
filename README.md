@@ -4,6 +4,12 @@ myo-java
 Java Bindings for Myo
 ---------------------
 
-Java language bindings for the Myo Developer Kit. The JNI libraries are all enclosed for OSX and Windows. 
+Java language bindings for the Myo Developer Kit.
 
-If you need to build the Libraries yourself, please refer to this project: https://github.com/NicholasAStuart/myo-java-JNI-Library
+OSX
+----------------------
+To get started with OSX it is necessary to create a directory in /var/local and set the permissions
+as follows.
+
+bash$ sudo mkdir /var/lock
+bash$ sudo chmod a+rw /var/lock
