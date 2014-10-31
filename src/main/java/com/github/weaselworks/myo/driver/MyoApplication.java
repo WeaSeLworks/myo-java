@@ -21,65 +21,73 @@ import gnu.io.CommPort;
 import gnu.io.CommPortIdentifier;
 import gnu.io.PortInUseException;
 import gnu.io.SerialPort;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.thingml.bglib.*;
-import org.thingml.bglib.gui.BLED112;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashSet;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public class MyoApplication extends BGAPIDefaultListener
 {
 
+    Logger logger = LoggerFactory.getLogger(MyoApplication.class);
 
     public static void main( String[] args )
     {
-        System.out.println( "Connecting BLED112 Dongle..." );
+        MyoApplication myoApplication = new MyoApplication();
+        myoApplication.loadLibrary();
+    }
 
+
+    public MyoApplication(){
+
+    }
+
+    public void loadLibrary(){
+
+        logger.info( "Connecting BLED112 Dongle..." );
 
         LibLoader.loadLibrary("rxtxSerial");
 
         BGAPITransport bgapi = connectBLED112();
         bgapi.addListener(new BGAPIPacketLogger());
         BGAPI impl = new BGAPI(bgapi);
-        impl.addListener(new SimpleDiscovery());
+        impl.addListener(this);
 
         try {
             Thread.sleep(500);
         } catch (InterruptedException ex) {
-            Logger.getLogger(SimpleDiscovery.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        System.out.println( "Requesting Version Number..." );
+            logger.error("Unable to load the library",ex);        }
+        logger.info("Requesting Version Number...");
         impl.send_system_get_info();
         impl.send_system_hello();
         impl.send_gap_set_scan_parameters(10, 250, 1);
         impl.send_gap_discover(1);
 
-
     }
 
     public void receive_system_get_info(Integer major, Integer minor, Integer patch, Integer build, Integer ll_version, Integer protocol_version, Integer hw) {
-        System.out.println("get_info_rsp :" + major + "." + minor + "." + patch + " (" + build + ") " + "ll=" + ll_version + " hw=" + hw);
+        logger.info("get_info_rsp :" + major + "." + minor + "." + patch + " (" + build + ") " + "ll=" + ll_version + " hw=" + hw);
     }
 
     public void receive_gap_scan_response(Integer rssi, Integer packet_type, BDAddr sender, Integer address_type, Integer bond, byte[] data) {
-        System.out.println("FOUND: " + sender.toString() + "["+ new String(data).trim() + "] (rssi = " + rssi + ", packet type= " + packet_type + ")");
+        logger.info("FOUND: " + sender.toString() + "[" + new String(data).trim() + "] (rssi = " + rssi + ", packet type= " + packet_type + ")");
     }
 
     @Override
     public void receive_system_hello() {
-        System.out.println("GOT HELLO!");
+        logger.info("GOT HELLO!");
     }
 
-    public static BGAPITransport connectBLED112() {
+    public  BGAPITransport connectBLED112() {
         SerialPort port = connectSerial();
         try {
             return new BGAPITransport(port.getInputStream(), port.getOutputStream());
         } catch (IOException ex) {
-            Logger.getLogger(BLED112.class.getName()).log(Level.SEVERE, null, ex);
+            logger.error("Unable to execute connectSerial", ex);
         }
         return null;
     }

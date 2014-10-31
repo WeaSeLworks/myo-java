@@ -33,6 +33,8 @@ dependencies{
      compile 'org.thingml:bglib-gui:1.1.0'
      compile 'de.root1:rxtx-rebundled:2.1-7r2-4'
      compile 'commons-io:commons-io:2.4'
+     compile 'ch.qos.logback:logback-classic:1.1.2'
+     compile 'ch.qos.logback:logback-core:1.1.2'
 
 }
 
