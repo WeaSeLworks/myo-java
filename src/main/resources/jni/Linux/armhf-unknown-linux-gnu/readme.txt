@@ -1,1 +1,0 @@
-armhf so file from Debian project (https://packages.debian.org/wheezy/librxtx-java )

@@ -24,7 +24,8 @@ repositories {
      jcenter()
      maven { url "http://maven.thingml.org/thingml-release/" }
      maven { url "http://maven.irisa.fr/artifactory/list/kevoree-libs-release-cache" }
-     maven { url 'http://nexus.root1.de/content/repositories/releases/' }
+     //maven { url 'http://nexus.root1.de/content/repositories/releases/' }
+     maven {url 'http://www.sparetimelabs.com/maven2'}
 }
 
 dependencies{
@@ -32,10 +33,12 @@ dependencies{
      compile 'org.slf4j:slf4j-simple:1.7.5'
      compile 'org.thingml:bglib-protocol-1.0.3-43:1.1.0'
      compile 'org.thingml:bglib-gui:1.1.0'
-     compile 'de.root1:rxtx-rebundled:2.1-7r2-4'
+     //compile 'de.root1:rxtx-rebundled:2.1-7r2-4'
+     compile 'com.sparetimelabs:purejavacomm:0.0.22'
      compile 'commons-io:commons-io:2.4'
      compile 'ch.qos.logback:logback-classic:1.1.2'
      compile 'ch.qos.logback:logback-core:1.1.2'
+     compile 'commons-codec:commons-codec:1.9'
 
 }
 

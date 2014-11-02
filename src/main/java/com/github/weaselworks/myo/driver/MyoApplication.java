@@ -16,14 +16,14 @@
 package com.github.weaselworks.myo.driver;
 
 
-import de.root1.rxtxrebundled.LibLoader;
-import gnu.io.CommPort;
-import gnu.io.CommPortIdentifier;
-import gnu.io.PortInUseException;
-import gnu.io.SerialPort;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.thingml.bglib.*;
+import com.github.weaselworks.myo.driver.listener.BGAPIPacketLogger;
+import purejavacomm.CommPort;
+import purejavacomm.CommPortIdentifier;
+import purejavacomm.PortInUseException;
+import purejavacomm.SerialPort;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -50,12 +50,13 @@ public class MyoApplication extends BGAPIDefaultListener
 
         logger.info( "Connecting BLED112 Dongle..." );
 
-        LibLoader.loadLibrary("rxtxSerial");
-
         BGAPITransport bgapi = connectBLED112();
         bgapi.addListener(new BGAPIPacketLogger());
         BGAPI impl = new BGAPI(bgapi);
         impl.addListener(this);
+
+
+
 
         try {
             Thread.sleep(500);
@@ -178,6 +179,28 @@ public class MyoApplication extends BGAPIDefaultListener
             e.printStackTrace();
         }
         return null;
+    }
+
+    public String convertHexToString(String hex){
+
+        StringBuilder sb = new StringBuilder();
+        StringBuilder temp = new StringBuilder();
+
+        //49204c6f7665204a617661 split into two characters 49, 20, 4c...
+        for( int i=0; i<hex.length()-1; i+=2 ){
+
+            //grab the hex in pairs
+            String output = hex.substring(i, (i + 2));
+            //convert hex to decimal
+            int decimal = Integer.parseInt(output, 16);
+            //convert the decimal to character
+            sb.append((char)decimal);
+
+            temp.append(decimal);
+        }
+        logger.info("Decimal : " + temp.toString());
+
+        return sb.toString();
     }
 
 

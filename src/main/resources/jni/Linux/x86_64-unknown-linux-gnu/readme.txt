@@ -1,1 +1,0 @@
-so file from https://launchpad.net/ubuntu/lucid/amd64/librxtx-java/2.1.7r2-4ubuntu1
