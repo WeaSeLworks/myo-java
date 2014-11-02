@@ -31,7 +31,7 @@ dependencies{
      compile 'org.slf4j:slf4j-api:1.7.5'
      compile 'org.thingml:bglib-protocol-1.0.3-43:1.1.0'
      compile 'org.thingml:bglib-gui:1.1.0'
-     compile 'de.root1:rxtx-rebundled:2.1-7r2-4'
+     compile 'org.rxtx:rxtx:2.1.7'
      compile 'commons-io:commons-io:2.4'
      compile 'ch.qos.logback:logback-classic:1.1.2'
      compile 'ch.qos.logback:logback-core:1.1.2'
