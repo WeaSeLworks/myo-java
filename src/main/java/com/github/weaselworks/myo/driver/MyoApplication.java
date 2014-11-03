@@ -16,6 +16,8 @@
 package com.github.weaselworks.myo.driver;
 
 
+import com.github.weaselworks.myo.driver.listener.EmgListener;
+import com.github.weaselworks.myo.driver.listener.ImuListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.thingml.bglib.*;
@@ -54,6 +56,8 @@ public class MyoApplication extends BGAPIDefaultListener
         bgapi.addListener(new BGAPIPacketLogger());
         BGAPI impl = new BGAPI(bgapi);
         impl.addListener(this);
+        impl.addListener(new EmgListener());
+        impl.addListener(new ImuListener());
 
 
 
