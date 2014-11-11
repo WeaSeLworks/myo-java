@@ -16,12 +16,12 @@
 package com.github.weaselworks.myo.driver;
 
 
+import com.github.weaselworks.myo.driver.listener.BluetoothListener;
 import com.github.weaselworks.myo.driver.listener.EmgListener;
 import com.github.weaselworks.myo.driver.listener.ImuListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.thingml.bglib.*;
-import com.github.weaselworks.myo.driver.listener.BGAPIPacketLogger;
 import purejavacomm.CommPort;
 import purejavacomm.CommPortIdentifier;
 import purejavacomm.PortInUseException;
@@ -34,6 +34,9 @@ import java.util.HashSet;
 
 public class MyoApplication extends BGAPIDefaultListener
 {
+
+    public static final String PAULSMYO = "c3:69:40:b1:5d:f6";
+
 
     Logger logger = LoggerFactory.getLogger(MyoApplication.class);
 
@@ -53,12 +56,12 @@ public class MyoApplication extends BGAPIDefaultListener
         logger.info( "Connecting BLED112 Dongle..." );
 
         BGAPITransport bgapi = connectBLED112();
-        bgapi.addListener(new BGAPIPacketLogger());
+        //bgapi.addListener(new BGAPIPacketLogger());
         BGAPI impl = new BGAPI(bgapi);
-        impl.addListener(this);
+        BluetoothListener listener = new BluetoothListener(impl);
+        impl.addListener(listener);
         impl.addListener(new EmgListener());
         impl.addListener(new ImuListener());
-
 
 
 
@@ -72,20 +75,27 @@ public class MyoApplication extends BGAPIDefaultListener
         impl.send_gap_set_scan_parameters(10, 250, 1);
         impl.send_gap_discover(1);
 
+        logger.info("Waiting for Myo...");
+        while(!listener.getDevices().stream().anyMatch(device -> device.toString().equals(PAULSMYO))) {
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                //swallow
+            }
+        }
+
+        try {
+            logger.info(String.format("Found %d devices",listener.getDevices().size()));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        impl.send_gap_connect_direct(BDAddr.fromString(PAULSMYO), 1, 100, 2000, 15000, 3);
+        //impl.send_connection_get_status();
+
+
     }
 
-    public void receive_system_get_info(Integer major, Integer minor, Integer patch, Integer build, Integer ll_version, Integer protocol_version, Integer hw) {
-        logger.info("get_info_rsp :" + major + "." + minor + "." + patch + " (" + build + ") " + "ll=" + ll_version + " hw=" + hw);
-    }
-
-    public void receive_gap_scan_response(Integer rssi, Integer packet_type, BDAddr sender, Integer address_type, Integer bond, byte[] data) {
-        logger.info("FOUND: " + sender.toString() + "[" + new String(data).trim() + "] (rssi = " + rssi + ", packet type= " + packet_type + ")");
-    }
-
-    @Override
-    public void receive_system_hello() {
-        logger.info("GOT HELLO!");
-    }
 
     public  BGAPITransport connectBLED112() {
         SerialPort port = connectSerial();
