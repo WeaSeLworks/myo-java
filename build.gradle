@@ -1,10 +1,11 @@
 apply plugin: 'java'
 apply plugin: 'maven'
 apply plugin: 'idea'
+apply from: "http://dl.bintray.com/content/shemnon/javafx-gradle/0.4.0/javafx.plugin"
 
-apply plugin:'application'
+//apply plugin:'application'
 
-mainClassName = "com.github.weaselworks.myo.driver.MyoApplication"
+//mainClassName = "com.github.weaselworks.myo.driver.MyoApplication"
 
 group = 'com.github.weaselworks.myo'
 version = '0.0.1'
@@ -23,22 +24,56 @@ repositories {
      maven { url "http://repo.maven.apache.org/maven2" }
      jcenter()
      maven { url "http://maven.thingml.org/thingml-release/" }
-     maven { url "http://maven.irisa.fr/artifactory/list/kevoree-libs-release-cache" }
-     //maven { url 'http://nexus.root1.de/content/repositories/releases/' }
      maven {url 'http://www.sparetimelabs.com/maven2'}
 }
 
 dependencies{
-     compile 'org.slf4j:slf4j-api:1.7.5'
-     compile 'org.slf4j:slf4j-simple:1.7.5'
-     compile 'org.thingml:bglib-protocol-1.0.3-43:1.1.0'
-     compile 'org.thingml:bglib-gui:1.1.0'
-     //compile 'de.root1:rxtx-rebundled:2.1-7r2-4'
-     compile 'com.sparetimelabs:purejavacomm:0.0.22'
-     compile 'commons-io:commons-io:2.4'
-     compile 'ch.qos.logback:logback-classic:1.1.2'
-     compile 'ch.qos.logback:logback-core:1.1.2'
-     compile 'commons-codec:commons-codec:1.9'
+    compile 'org.slf4j:slf4j-api:1.7.5'
+    compile 'org.slf4j:slf4j-simple:1.7.5'
+    compile 'org.thingml:bglib-protocol-1.0.3-43:1.1.0'
+    //compile 'org.thingml:bglib-gui:1.1.0'
+    compile 'com.sparetimelabs:purejavacomm:0.0.22'
+    compile 'commons-io:commons-io:2.4'
+    compile 'ch.qos.logback:logback-classic:1.1.2'
+    compile 'ch.qos.logback:logback-core:1.1.2'
+    compile 'commons-codec:commons-codec:1.9'
+    compile 'com.airhacks:afterburner.fx:1.6.0'
+}
 
+
+// Configures plugin
+javafx {
+    // Points to JDK and its JavaFX libraries, also declares target runtime JDK
+    javaRuntime = '/Library/Java/JavaVirtualMachines/jdk1.8.0_05.jdk'
+
+
+    // Application name and ID presented by target OS
+    appID 'HelloWorldApp'
+    appName 'Hello World Application'
+
+    // Main class of application
+    mainClass 'com.github.weaselworks.ui.MyoAppUI'
+
+    // JVM arguments, system properties, application command line arguments
+    jvmArgs = ['-XX:+AggressiveOpts', '-XX:CompileThreshold=1']
+    systemProperties = ['prism.disableRegionCaching':'true']
+    arguments = ['-l', '--fast']
+
+    // Keystore credentials for signing JAR
+    // Generate key: keytool -genkey -alias release -keyalg RSA -keystore keystore.jks -keysize 2048
+    releaseKey {
+        alias = 'release'
+        keyPass = getProjectProperty('keyStorePassword')
+        keyStore = file("${System.properties['user.home']}/keystore/keystore.jks")
+        storePass = getProjectProperty('storePassword')
+    }
+
+    signingMode 'release'
+
+    // ...
+}
+
+String getProjectProperty(String propertyName) {
+    project.hasProperty(propertyName) ? project.property(propertyName) : null
 }
 
