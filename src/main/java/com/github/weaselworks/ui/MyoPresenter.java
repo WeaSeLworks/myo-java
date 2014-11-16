@@ -4,6 +4,7 @@ package com.github.weaselworks.ui;
 import com.github.weaselworks.myo.driver.MyoApplication;
 import javafx.application.Platform;
 import javafx.collections.ObservableList;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Button;
@@ -22,10 +23,12 @@ import java.util.ResourceBundle;
  */
 public class MyoPresenter implements Initializable {
 
+    private int connectionId =-1;
+
     private ObservableList<String> data;
 
     @FXML
-    private Button button;
+    private Button connectButton;
 
     @FXML
     private Label connectionStatus;
@@ -39,18 +42,43 @@ public class MyoPresenter implements Initializable {
     @FXML
     private void onClick(MouseEvent mouseEvent) {
         if(mouseEvent.getButton().equals(MouseButton.PRIMARY)){
-            if(mouseEvent.getClickCount() == 2){
-                String selectedDevice = deviceList.getSelectionModel()
-                        .getSelectedItem();
+            if(mouseEvent.getClickCount() == 2 && !isConnected()){
+                connectToSelected();
+            }
+        }
+    }
 
+    @FXML
+    private void connectBtnAction(ActionEvent mouseEvent) {
+        connectToSelected();
+    }
+
+    private void connectToSelected() {
+        String selectedDevice = deviceList.getSelectionModel()
+                .getSelectedItem();
+        if (!isConnected()) {
+            if (selectedDevice != null) {
                 myo.connect(selectedDevice, connId -> {
                     Platform.runLater(() -> {
-                        connectionStatus.setText(String.format("Connected [%s]",connId));
+                        connectButton.setText("Disconnect");
+                        connectionId = connId;
+                        connectionStatus.setText(String.format("Connected [%s]", connId));
                     });
                 });
             }
         }
+        else {
+            myo.disconnect(connectionId, id -> {
+                Platform.runLater(() -> {
+                    connectButton.setText("Connect");
+                    connectionId = -1;
+                    connectionStatus.setText("Status: Idle");
+                });
+            });
+        }
+
     }
+
 
     /**
      * Called to initialize a controller after its root element has been
@@ -73,5 +101,9 @@ public class MyoPresenter implements Initializable {
                 }
             });
         });
+    }
+
+    private boolean isConnected() {
+        return connectionId >= 0;
     }
 }

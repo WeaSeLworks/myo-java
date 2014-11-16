@@ -39,6 +39,8 @@ public class MyoApplication extends BGAPIDefaultListener
     private int connection;
     private Consumer<BDAddr> deviceFoundAction;
     private Consumer<Integer> connectAction;
+    private Consumer<Integer> disconnectAction;
+
 
 
     static Logger logger = LoggerFactory.getLogger(MyoApplication.class);
@@ -73,7 +75,7 @@ public class MyoApplication extends BGAPIDefaultListener
 
     public void onDeviceFound(Consumer<BDAddr> action) {
         deviceFoundAction = action;
-        client.send_gap_set_scan_parameters(100, 250, 1);
+        client.send_gap_set_scan_parameters(200, 400, 1);
         client.send_gap_discover(1);
         logger.info("Scanning for devices...");
     }
@@ -81,6 +83,18 @@ public class MyoApplication extends BGAPIDefaultListener
     public void connect(String bluetoothAddress, Consumer<Integer> connectAction){
         client.send_gap_connect_direct(BDAddr.fromString(bluetoothAddress), 0, 6, 6, 100, 0);
         this.connectAction = connectAction;
+    }
+
+    public void disconnect(int connId, Consumer<Integer> disconnectAction){
+        client.send_connection_disconnect(connId);
+        this.disconnectAction = disconnectAction;
+    }
+
+
+    @Override
+    public void receive_connection_disconnect(int connection, int result) {
+        logger.info("receive_connection_disconnect !!!");
+        disconnectAction.accept(connection);
     }
 
     @Override
@@ -304,11 +318,6 @@ public class MyoApplication extends BGAPIDefaultListener
     @Override
     public void receive_attributes_user_request(int connection, int handle, int offset) {
         logger.info("receive_attributes_user_request !!!");
-    }
-
-    @Override
-    public void receive_connection_disconnect(int connection, int result) {
-        logger.info("receive_connection_disconnect !!!");
     }
 
     @Override
