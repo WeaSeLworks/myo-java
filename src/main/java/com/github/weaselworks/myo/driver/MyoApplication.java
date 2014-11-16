@@ -33,6 +33,13 @@ public class MyoApplication extends BGAPIDefaultListener
 
     public static final String PAULSMYO = "c3:69:40:b1:5d:f6";
     public static final int MANUFACTURER = 0x0B;
+    public static final int FIRMWARE = 0x0B;
+    public static final int MYO_SENSOR_SETTINGS = 0x19;
+    public static final int EMG = 0x28;
+    public static final int IMU = 0x1d;
+
+    public static final int IMU_VALUE = 28;
+   
 
 
     private BGAPI client;
@@ -41,6 +48,7 @@ public class MyoApplication extends BGAPIDefaultListener
     private Consumer<BDAddr> deviceFoundAction;
     private Consumer<Integer> connectAction;
     private Consumer<Integer> disconnectAction;
+    private Consumer<String> firmwareAction;
 
 
 
@@ -86,9 +94,30 @@ public class MyoApplication extends BGAPIDefaultListener
         this.connectAction = connectAction;
     }
 
-    public void disconnect(int connId, Consumer<Integer> disconnectAction){
+    public void disconnect(int connId, Consumer<Integer> disconnectAction) {
         client.send_connection_disconnect(connId);
         this.disconnectAction = disconnectAction;
+    }
+
+    public void getFirmwareVersion(Consumer<String> action ) {
+        this.firmwareAction = action;
+        client.send_attclient_read_by_handle(connection, 0x17);
+    }
+
+    public void enableIMU(){
+        client.send_attclient_attribute_write(connection, IMU,new byte[] {0x01, 0x00} );
+        int C = 200;
+        int emg_hz = 50;
+        int emg_smooth = 100;
+        int imu_hz = 50;
+
+        client.send_attclient_attribute_write(connection,
+                MYO_SENSOR_SETTINGS,
+                new byte[]{0x02, 0x09, 0x02, 0x01, 0x7F, 0x32, 0x14, 0x32, 0, 0});
+        //new byte[] {0x01
+          //      0x00} );
+        //self.bt.write_attr(self.conn ,0x19, pack('BBBBHBBBBB', 2, 9, 2, 1, C, emg_smooth, C / emg_hz, imu_hz, 0, 0))
+
     }
 
 
@@ -100,42 +129,59 @@ public class MyoApplication extends BGAPIDefaultListener
 
     @Override
     public void receive_gap_scan_response(int rssi, int packet_type, BDAddr sender, int address_type, int bond, byte[] data) {
-        logger.info(String.format("Found device %s",sender));
+        logger.debug(String.format("Found device %s", sender));
         if (deviceFoundAction != null) {
             deviceFoundAction.accept(sender);
         }
     }
 
-
     @Override
     public void receive_gap_connect_direct(int result, int connection_handle) {
         logger.info(String.format("<<< Connected >>> [%d] Result: %d", connection_handle, result));
         connection = connection_handle;
-
         connectAction.accept(connection_handle);
+    }
+//0.0.8.0.18.0.2.0
+
+    @Override
+    public void receive_attclient_attribute_value(int connection, int atthandle, int type, byte[] value) {
+        logger.info("receive_attclient_attribute_value.");
+        logger.info(String.format("AttrHandle[%d]  Type[%d]  DataSize:[%d]",atthandle,type,value.length));
+
+        if (this.connection == connection) {
+            switch (atthandle) {
+                case FIRMWARE:  firmwareInfoReceived(value);
+                case IMU_VALUE: imuDataReceived(value);
+            }
+
+        }
+    }
+
+    private void imuDataReceived(byte[] value) {
+
+        //total guesses - this is come copy and paste code that is most likely wrong
+        int gx = ((value[1] & 0xFF) << 8) + (value[0] & 0xFF); if (gx > (1<<15)) { gx = gx - (1<<16); }
+        int gy = ((value[3] & 0xFF) << 8) + (value[2] & 0xFF); if (gy > (1<<15)) { gy = gy - (1<<16); }
+        int gz = ((value[5] & 0xFF) << 8) + (value[4] & 0xFF); if (gz > (1<<15)) { gz = gz - (1<<16); }
+
+        int ax = ((value[7] & 0xFF) << 8) + (value[6] & 0xFF); if (ax > (1<<15)) { ax = ax - (1<<16); }
+        int ay = ((value[9] & 0xFF) << 8) + (value[8] & 0xFF); if (ay > (1<<15)) { ay = ay - (1<<16); }
+        int az = ((value[11] & 0xFF) << 8) + (value[10] & 0xFF); if (az > (1<<15)) { az = az - (1<<16); }
 
 
+        logger.info(String.format("IMU gx: %d  gy: %d  gz: %d  ax: %d  ay: %d  az: %d",gx,gy,gz,ax,ay,az));
+    }
 
-//        client.send_attclient_read_by_handle(connection_handle, 0x17);
-//        while(true) {
-//            logger.info(".");
-//            try {
-//                Thread.sleep(2000);
-//            } catch (InterruptedException e) {
-//                //swallow
-//            }
-//            client.send_connection_get_status(connection_handle);
-//        }
-
-        //client.send_attr(connection_handle, 23);
-        //client.send_attclient_read_by_handle(connection_handle, 0x17);
-        //client.send
-
+    private void firmwareInfoReceived(byte[] value) {
+        String ver = String.format("%d.%d.%d.%d", (int) value[0], (int) value[1], (int) value[2], (int) value[3]);
+        firmwareAction.accept(ver);
     }
 
     @Override
     public void receive_attclient_read_by_handle(int connection, int result) {
         logger.info(String.format("receive_attclient_read_by_handle !!! %d %d",connection, result));
+
+
     }
 
     @Override
@@ -455,11 +501,6 @@ public class MyoApplication extends BGAPIDefaultListener
     @Override
     public void receive_attclient_find_information_found(int connection, int chrhandle, byte[] uuid) {
         logger.info("receive_attclient_find_information_found !!!");
-    }
-
-    @Override
-    public void receive_attclient_attribute_value(int connection, int atthandle, int type, byte[] value) {
-        logger.info("receive_attclient_attribute_value !!!");
     }
 
     @Override

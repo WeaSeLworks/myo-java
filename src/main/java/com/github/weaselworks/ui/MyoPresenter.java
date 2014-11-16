@@ -12,6 +12,8 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import java.net.URL;
@@ -22,6 +24,8 @@ import java.util.ResourceBundle;
  * Created by paulwatson on 15/11/2014.
  */
 public class MyoPresenter implements Initializable {
+
+    static Logger logger = LoggerFactory.getLogger(MyoPresenter.class);
 
     private int connectionId =-1;
 
@@ -36,8 +40,26 @@ public class MyoPresenter implements Initializable {
     @FXML
     private ListView<String> deviceList;
 
+    @FXML
+    private Button firmwareButton;
+
+    @FXML
+    private Label firmware;
+
     @Inject
     private MyoApplication myo;
+
+    @FXML
+    private void getTheFirmware(ActionEvent e){
+        logger.info("Getting the Firmware");
+        myo.enableIMU();
+        myo.getFirmwareVersion(ver -> {
+            Platform.runLater(() -> {
+                firmware.setText(ver);
+            });
+        });
+
+    }
 
     @FXML
     private void onClick(MouseEvent mouseEvent) {
