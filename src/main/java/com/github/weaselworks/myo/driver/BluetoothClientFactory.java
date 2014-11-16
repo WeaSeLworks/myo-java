@@ -22,6 +22,7 @@ public class BluetoothClientFactory {
     private final static Logger logger = LoggerFactory.getLogger(BluetoothClientFactory.class);
 
     private static BGAPI client = null;
+    private static SerialPort port = null;
 
     public static BGAPI instance() {
         if (client == null) {
@@ -31,8 +32,21 @@ public class BluetoothClientFactory {
         return client;
     }
 
+    public static void disconnectBLED112() {
+        //client.getLowLevelDriver().removeListener(logger);
+        logger.info("BLE: Reset BLED112 Dongle");
+        client.send_system_reset(0);
+        client.disconnect();
+
+        if (port != null) {
+            port.close();
+        }
+        client = null;
+        port = null;
+    }
+
     private static BGAPITransport connectBLED112() {
-        SerialPort port = connectSerial();
+        port = connectSerial();
         try {
             return new BGAPITransport(port.getInputStream(), port.getOutputStream());
         } catch (IOException ex) {

@@ -14,10 +14,11 @@ import java.net.URL;
 
 public class MyoAppUI extends Application {
 
+    MyoView appView;
+
     @Override
     public void start(Stage primaryStage) throws Exception{
-        //FXMLLoader loader = new FXMLLoader();
-        MyoView appView = new MyoView();
+        appView = new MyoView();
         Scene scene = new Scene(appView.getView());
         primaryStage.setTitle("Hello World");
         primaryStage.setScene(scene);
@@ -31,8 +32,9 @@ public class MyoAppUI extends Application {
     @Override
     public void stop() throws Exception {
         Injector.forgetAll();
-        BluetoothClientFactory.instance().disconnect();
     }
+
+
 
 
 }

@@ -22,6 +22,7 @@ import org.thingml.bglib.BDAddr;
 import org.thingml.bglib.BGAPI;
 import org.thingml.bglib.BGAPIDefaultListener;
 
+import javax.annotation.PreDestroy;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.FutureTask;
@@ -684,5 +685,20 @@ public class MyoApplication extends BGAPIDefaultListener
     @Override
     public void receive_test_get_channel_map(byte[] channel_map) {
         logger.info("receive_test_get_channel_map !!!");
+    }
+
+    @PreDestroy
+    public void shutdown() {
+        logger.info("Destorying MyoApplication Instance");
+        //client.removeListener(this);
+        if (connection >= 0) {
+            client.send_connection_disconnect(connection);
+        }
+
+        if (client != null) {
+            client.removeListener(this);
+        }
+
+        BluetoothClientFactory.disconnectBLED112();
     }
 }
