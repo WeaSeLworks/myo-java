@@ -28,7 +28,7 @@
         </rowConstraints>
          <children>
             <ListView fx:id="deviceList" onMouseClicked="#onClick" prefHeight="200.0" prefWidth="200.0" />
-            <Button fx:id="button" mnemonicParsing="false" text="Button" GridPane.columnIndex="1" />
+            <Label fx:id="connectionStatus" text="Idle" GridPane.rowIndex="1" />
          </children>
       </GridPane>
    </children>

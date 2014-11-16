@@ -7,7 +7,9 @@ import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Button;
+import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
+import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 
 import javax.inject.Inject;
@@ -26,15 +28,28 @@ public class MyoPresenter implements Initializable {
     private Button button;
 
     @FXML
+    private Label connectionStatus;
+
+    @FXML
     private ListView<String> deviceList;
 
     @Inject
     private MyoApplication myo;
 
     @FXML
-    private void onClick(MouseEvent evt) {
-        System.out.println("******** foo *******");
+    private void onClick(MouseEvent mouseEvent) {
+        if(mouseEvent.getButton().equals(MouseButton.PRIMARY)){
+            if(mouseEvent.getClickCount() == 2){
+                String selectedDevice = deviceList.getSelectionModel()
+                        .getSelectedItem();
 
+                myo.connect(selectedDevice, connId -> {
+                    Platform.runLater(() -> {
+                        connectionStatus.setText(String.format("Connected [%s]",connId));
+                    });
+                });
+            }
+        }
     }
 
     /**
@@ -50,9 +65,6 @@ public class MyoPresenter implements Initializable {
 
         myo.start();
         ObservableList<String> devices = deviceList.getItems();
-
-
-
 
         myo.onDeviceFound(addr -> {
             Platform.runLater(() -> {

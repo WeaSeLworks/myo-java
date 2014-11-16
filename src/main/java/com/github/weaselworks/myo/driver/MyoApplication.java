@@ -24,6 +24,7 @@ import org.thingml.bglib.BGAPIDefaultListener;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.FutureTask;
 import java.util.function.Consumer;
 
 public class MyoApplication extends BGAPIDefaultListener
@@ -37,6 +38,7 @@ public class MyoApplication extends BGAPIDefaultListener
     private Set<BDAddr> devices = new HashSet<BDAddr>();
     private int connection;
     private Consumer<BDAddr> deviceFoundAction;
+    private Consumer<Integer> connectAction;
 
 
     static Logger logger = LoggerFactory.getLogger(MyoApplication.class);
@@ -76,6 +78,11 @@ public class MyoApplication extends BGAPIDefaultListener
         logger.info("Scanning for devices...");
     }
 
+    public void connect(String bluetoothAddress, Consumer<Integer> connectAction){
+        client.send_gap_connect_direct(BDAddr.fromString(bluetoothAddress), 0, 6, 6, 100, 0);
+        this.connectAction = connectAction;
+    }
+
     @Override
     public void receive_gap_scan_response(int rssi, int packet_type, BDAddr sender, int address_type, int bond, byte[] data) {
         logger.info(String.format("Found device %s",sender));
@@ -90,18 +97,20 @@ public class MyoApplication extends BGAPIDefaultListener
         logger.info(String.format("<<< Connected >>> [%d] Result: %d", connection_handle, result));
         connection = connection_handle;
 
+        connectAction.accept(connection_handle);
 
 
-        client.send_attclient_read_by_handle(connection_handle, 0x17);
-        while(true) {
-            logger.info(".");
-            try {
-                Thread.sleep(2000);
-            } catch (InterruptedException e) {
-                //swallow
-            }
-            client.send_connection_get_status(connection_handle);
-        }
+
+//        client.send_attclient_read_by_handle(connection_handle, 0x17);
+//        while(true) {
+//            logger.info(".");
+//            try {
+//                Thread.sleep(2000);
+//            } catch (InterruptedException e) {
+//                //swallow
+//            }
+//            client.send_connection_get_status(connection_handle);
+//        }
 
         //client.send_attr(connection_handle, 23);
         //client.send_attclient_read_by_handle(connection_handle, 0x17);
