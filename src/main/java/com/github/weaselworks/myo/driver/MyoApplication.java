@@ -105,21 +105,39 @@ public class MyoApplication extends BGAPIDefaultListener
     }
 
     public void enableIMU(){
-        client.send_attclient_attribute_write(connection, IMU,new byte[] {0x01, 0x00} );
+
+        //enable the EMG data
+        //client.send_attclient_attribute_write(connection, EMG, new byte[] {0x01, 0x00} );
+
+        //enable the IMU data
+        client.send_attclient_attribute_write(connection, IMU, new byte[] {0x01, 0x00} );
+
+
+        client.send_attclient_attribute_write(connection, 0x19, new byte[] {0x01, 0x02, 0x00, 0x00} );
+        client.send_attclient_attribute_write(connection, 0x2f, new byte[] {0x01, 0x00} );
+        client.send_attclient_attribute_write(connection, 0x2c, new byte[] {0x01, 0x00} );
+        client.send_attclient_attribute_write(connection, 0x32, new byte[] {0x01, 0x00} );
+        client.send_attclient_attribute_write(connection, 0x35, new byte[] {0x01, 0x00} );
+
+
         int C = 200;
-        int emg_hz = 50;
         int emg_smooth = 100;
         int imu_hz = 50;
 
+        //this is to get around the max value of a byte in java (2^7 -1)
+        byte b = 0;
+        b ^= 0xE8;
+
+        byte imuSamplingRate = 0; imuSamplingRate ^= 0xFA;
+
         client.send_attclient_attribute_write(connection,
                 MYO_SENSOR_SETTINGS,
-                new byte[]{0x02, 0x09, 0x02, 0x01, 0x7F, 0x32, 0x14, 0x32, 0, 0});
-        //new byte[] {0x01
-          //      0x00} );
+                //         2,      9,    2,   1,   (1000  ), 100,  20,    50,  0, 0
+                new byte[]{0x02, 0x09, 0x02, 0x01, 0x03, b,  0x64, 0x14, 0x32, 0, 0});
+
         //self.bt.write_attr(self.conn ,0x19, pack('BBBBHBBBBB', 2, 9, 2, 1, C, emg_smooth, C / emg_hz, imu_hz, 0, 0))
 
     }
-
 
     @Override
     public void receive_connection_disconnect(int connection, int result) {
@@ -168,9 +186,10 @@ public class MyoApplication extends BGAPIDefaultListener
         int ay = ((value[9] & 0xFF) << 8) + (value[8] & 0xFF); if (ay > (1<<15)) { ay = ay - (1<<16); }
         int az = ((value[11] & 0xFF) << 8) + (value[10] & 0xFF); if (az > (1<<15)) { az = az - (1<<16); }
 
-
+        logger.info(bytesToHex(value));
         logger.info(String.format("IMU gx: %d  gy: %d  gz: %d  ax: %d  ay: %d  az: %d",gx,gy,gz,ax,ay,az));
     }
+
 
     private void firmwareInfoReceived(byte[] value) {
         String ver = String.format("%d.%d.%d.%d", (int) value[0], (int) value[1], (int) value[2], (int) value[3]);
