@@ -25,8 +25,8 @@ import org.thingml.bglib.BGAPIDefaultListener;
 import javax.annotation.PreDestroy;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.concurrent.FutureTask;
 import java.util.function.Consumer;
+import java.util.function.IntFunction;
 
 public class MyoApplication extends BGAPIDefaultListener
 {
@@ -39,6 +39,13 @@ public class MyoApplication extends BGAPIDefaultListener
     public static final int IMU = 0x1d;
 
     public static final int IMU_VALUE = 28;
+
+    private static final int IDLE = 0;
+    private static final int SERVICES = 1;
+    private static final int ATTRIBUTES = 2;
+//    private Iterator<BLEService> discovery_it = null;
+//    private BLEService discovery_srv = null;
+    private int discovery_state = IDLE;
    
 
 
@@ -49,6 +56,7 @@ public class MyoApplication extends BGAPIDefaultListener
     private Consumer<Integer> connectAction;
     private Consumer<Integer> disconnectAction;
     private Consumer<String> firmwareAction;
+    private IntFunction writeFinished;
 
 
 
@@ -104,23 +112,48 @@ public class MyoApplication extends BGAPIDefaultListener
         client.send_attclient_read_by_handle(connection, 0x17);
     }
 
+    boolean writeAttr = false;
+
+    public void writeAttr(int handle, byte[] data){
+        logger.info("Writing Attr "+handle);
+        client.send_attclient_attribute_write(connection, handle, data);
+        while (!writeAttr) {
+            try {
+                Thread.sleep(50);
+            } catch (InterruptedException e) {
+
+            }
+        }
+
+        writeAttr = false;
+
+    }
+
     public void enableIMU(){
 
+
+        //client.send_attclient_find_information()
+
+//        client.send_attclient_attribute_write(connection, 0x19, new byte[]{0x01, 0x02, 0x00, 0x00});
+//        client.send_attclient_attribute_write(connection, 0x2f, new byte[] {0x01, 0x00} );
+//        client.send_attclient_attribute_write(connection, 0x2c, new byte[] {0x01, 0x00} );
+//        client.send_attclient_attribute_write(connection, 0x32, new byte[] {0x01, 0x00} );
+//        client.send_attclient_attribute_write(connection, 0x35, new byte[] {0x01, 0x00} );
+
+        writeAttr(0x19, new byte[]{0x01, 0x02, 0x00, 0x00});
+        writeAttr(0x2f, new byte[] {0x01, 0x00} );
+        writeAttr(0x2c, new byte[] {0x01, 0x00} );
+        writeAttr(0x32, new byte[] {0x01, 0x00} );
+        writeAttr(0x35, new byte[] {0x01, 0x00} );
+
         //enable the EMG data
-        //client.send_attclient_attribute_write(connection, EMG, new byte[] {0x01, 0x00} );
+        writeAttr(EMG, new byte[] {0x01, 0x00} );
 
         //enable the IMU data
-        client.send_attclient_attribute_write(connection, IMU, new byte[] {0x01, 0x00} );
+        writeAttr(IMU, new byte[] {0x01, 0x00} );
 
 
-        client.send_attclient_attribute_write(connection, 0x19, new byte[] {0x01, 0x02, 0x00, 0x00} );
-        client.send_attclient_attribute_write(connection, 0x2f, new byte[] {0x01, 0x00} );
-        client.send_attclient_attribute_write(connection, 0x2c, new byte[] {0x01, 0x00} );
-        client.send_attclient_attribute_write(connection, 0x32, new byte[] {0x01, 0x00} );
-        client.send_attclient_attribute_write(connection, 0x35, new byte[] {0x01, 0x00} );
-
-
-        int C = 200;
+        int C = 1000;
         int emg_smooth = 100;
         int imu_hz = 50;
 
@@ -130,13 +163,26 @@ public class MyoApplication extends BGAPIDefaultListener
 
         byte imuSamplingRate = 0; imuSamplingRate ^= 0xFA;
 
-        client.send_attclient_attribute_write(connection,
-                MYO_SENSOR_SETTINGS,
-                //         2,      9,    2,   1,   (1000  ), 100,  20,    50,  0, 0
-                new byte[]{0x02, 0x09, 0x02, 0x01, 0x03, b,  0x64, 0x14, 0x32, 0, 0});
+        //byte[] sensorSettings = getMyoSensorSettings();
+        byte[] sensorSettings2 = new byte[]{0x02, 0x09, 0x02, 0x01, b, 0x03,  0x64, 0x14, 0x32, 0, 0};
+        byte[] sensorSettings3 = new byte[]{0x02, 0x09, 0x02, 0x01, b, 0x03,  0x64, 0x14, 0x32, 0, 0};
+        byte[] sensorSettings4 = {(byte)0b00000010, (byte)0b00001001, (byte)0b00000010, (byte)0b00000001, (byte)0b11101000, (byte)0b00000011, (byte)0b1100100, (byte)0b10100, (byte)0b110010, (byte)0b00000000, (byte)0b00000000};
+        //[2 9 2 1 e8 3 64 14 32 0 0 ]
 
-        //self.bt.write_attr(self.conn ,0x19, pack('BBBBHBBBBB', 2, 9, 2, 1, C, emg_smooth, C / emg_hz, imu_hz, 0, 0))
+        writeAttr(MYO_SENSOR_SETTINGS, sensorSettings2);
 
+    }
+
+
+
+    @Override
+    public void receive_attclient_procedure_completed(int connection, int result, int chrhandle) {
+        logger.info("receive_attclient_procedure_completed " +chrhandle);
+        writeAttr = true;
+
+        if (result != 0) {
+            logger.error("ERROR: Attribute Procedure Completed with error code 0x" + Integer.toHexString(result));
+        }
     }
 
     @Override
@@ -163,8 +209,8 @@ public class MyoApplication extends BGAPIDefaultListener
 
     @Override
     public void receive_attclient_attribute_value(int connection, int atthandle, int type, byte[] value) {
-        logger.info("receive_attclient_attribute_value.");
-        logger.info(String.format("AttrHandle[%d]  Type[%d]  DataSize:[%d]",atthandle,type,value.length));
+        //logger.info("receive_attclient_attribute_value.");
+        //logger.info(String.format("AttrHandle[%d]  Type[%d]  DataSize:[%d]",atthandle,type,value.length));
 
         if (this.connection == connection) {
             switch (atthandle) {
@@ -186,7 +232,7 @@ public class MyoApplication extends BGAPIDefaultListener
         int ay = ((value[9] & 0xFF) << 8) + (value[8] & 0xFF); if (ay > (1<<15)) { ay = ay - (1<<16); }
         int az = ((value[11] & 0xFF) << 8) + (value[10] & 0xFF); if (az > (1<<15)) { az = az - (1<<16); }
 
-        logger.info(bytesToHex(value));
+        //logger.info(bytesToHex(value));
         logger.info(String.format("IMU gx: %d  gy: %d  gz: %d  ax: %d  ay: %d  az: %d",gx,gy,gz,ax,ay,az));
     }
 
@@ -232,6 +278,11 @@ public class MyoApplication extends BGAPIDefaultListener
     @Override
     public void receive_connection_features_get(int connection, int result) {
         logger.info("receive_connection_features_get !!! "+ result);
+    }
+
+    @Override
+    public void receive_attclient_attribute_write(int connection, int result) {
+        logger.info("receive_attclient_attribute_write !!!");
     }
 
     @Override
@@ -463,11 +514,6 @@ public class MyoApplication extends BGAPIDefaultListener
     }
 
     @Override
-    public void receive_attclient_attribute_write(int connection, int result) {
-        logger.info("receive_attclient_attribute_write !!!");
-    }
-
-    @Override
     public void receive_attclient_write_command(int connection, int result) {
         logger.info("receive_attclient_write_command !!!");
     }
@@ -500,11 +546,6 @@ public class MyoApplication extends BGAPIDefaultListener
     @Override
     public void receive_attclient_indicated(int connection, int attrhandle) {
         logger.info("receive_attclient_indicated !!!");
-    }
-
-    @Override
-    public void receive_attclient_procedure_completed(int connection, int result, int chrhandle) {
-        logger.info("receive_attclient_procedure_completed !!!");
     }
 
     @Override
