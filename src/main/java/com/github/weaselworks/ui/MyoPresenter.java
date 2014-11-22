@@ -18,6 +18,8 @@ import org.slf4j.LoggerFactory;
 import javax.inject.Inject;
 import java.net.URL;
 import java.util.ResourceBundle;
+import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
 
 
 /**
@@ -46,19 +48,30 @@ public class MyoPresenter implements Initializable {
     @FXML
     private Label firmware;
 
+    @FXML
+    private Label imuData;
+
+    @FXML
+    private Label emgData;
+
     @Inject
     private MyoApplication myo;
 
     @FXML
-    private void getTheFirmware(ActionEvent e){
-        logger.info("Getting the Firmware");
-        myo.enableIMU();
-        myo.getFirmwareVersion(ver -> {
+    private void subscribeToMyoData(ActionEvent e) throws ExecutionException, InterruptedException {
+        logger.info("Subscribing to myo data");
+
+        myo.subscribeMyoData(imus -> {
             Platform.runLater(() -> {
-                firmware.setText(ver);
+                imuData.setText(String.format("IMU x: %d y: %d z: %d", imus[0], imus[1], imus[2]));
+            });
+        }, emgs -> {
+            Platform.runLater(() -> {
+                String emgInfo = emgs.stream().map(Object::toString)
+                        .collect(Collectors.joining(", "));
+                emgData.setText(String.format("EMG %s", emgInfo));
             });
         });
-
     }
 
     @FXML

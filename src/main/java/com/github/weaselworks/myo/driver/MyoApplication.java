@@ -23,8 +23,8 @@ import org.thingml.bglib.BGAPI;
 import org.thingml.bglib.BGAPIDefaultListener;
 
 import javax.annotation.PreDestroy;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
+import java.util.concurrent.*;
 import java.util.function.Consumer;
 import java.util.function.IntFunction;
 
@@ -39,12 +39,11 @@ public class MyoApplication extends BGAPIDefaultListener
     public static final int IMU = 0x1d;
 
     public static final int IMU_VALUE = 28;
+    public static final int EMG_VALUE = 39;
 
     private static final int IDLE = 0;
     private static final int SERVICES = 1;
     private static final int ATTRIBUTES = 2;
-//    private Iterator<BLEService> discovery_it = null;
-//    private BLEService discovery_srv = null;
     private int discovery_state = IDLE;
    
 
@@ -56,7 +55,9 @@ public class MyoApplication extends BGAPIDefaultListener
     private Consumer<Integer> connectAction;
     private Consumer<Integer> disconnectAction;
     private Consumer<String> firmwareAction;
-    private IntFunction writeFinished;
+    private Consumer<Integer[]> imuAction;
+    private Consumer<List<Integer>> emgAction;
+
 
 
 
@@ -112,77 +113,27 @@ public class MyoApplication extends BGAPIDefaultListener
         client.send_attclient_read_by_handle(connection, 0x17);
     }
 
-    boolean writeAttr = false;
-
-    public void writeAttr(int handle, byte[] data){
-        logger.info("Writing Attr "+handle);
-        client.send_attclient_attribute_write(connection, handle, data);
-        while (!writeAttr) {
-            try {
-                Thread.sleep(50);
-            } catch (InterruptedException e) {
-
-            }
-        }
-
-        writeAttr = false;
-
+    public BgapiWriteAttrFuture writeAttr(int handle, byte[] data) {
+        return new BgapiWriteAttrFuture(client, connection, handle, data);
     }
 
-    public void enableIMU(){
+    public void subscribeMyoData(Consumer<Integer[]> imuAction, Consumer<List<Integer>> emgAction) throws ExecutionException, InterruptedException {
+        this.imuAction = imuAction;
+        this.emgAction = emgAction;
+        writeAttr(EMG, new byte[] {0x01, 0x00} ).get();
+        writeAttr(IMU, new byte[] {0x01, 0x00} ).get();
+        sendSettings();
+    }
 
-
-        //client.send_attclient_find_information()
-
-//        client.send_attclient_attribute_write(connection, 0x19, new byte[]{0x01, 0x02, 0x00, 0x00});
-//        client.send_attclient_attribute_write(connection, 0x2f, new byte[] {0x01, 0x00} );
-//        client.send_attclient_attribute_write(connection, 0x2c, new byte[] {0x01, 0x00} );
-//        client.send_attclient_attribute_write(connection, 0x32, new byte[] {0x01, 0x00} );
-//        client.send_attclient_attribute_write(connection, 0x35, new byte[] {0x01, 0x00} );
-
-        writeAttr(0x19, new byte[]{0x01, 0x02, 0x00, 0x00});
-        writeAttr(0x2f, new byte[] {0x01, 0x00} );
-        writeAttr(0x2c, new byte[] {0x01, 0x00} );
-        writeAttr(0x32, new byte[] {0x01, 0x00} );
-        writeAttr(0x35, new byte[] {0x01, 0x00} );
-
-        //enable the EMG data
-        writeAttr(EMG, new byte[] {0x01, 0x00} );
-
-        //enable the IMU data
-        writeAttr(IMU, new byte[] {0x01, 0x00} );
-
-
+    private void sendSettings() throws ExecutionException, InterruptedException {
         int C = 1000;
         int emg_smooth = 100;
         int imu_hz = 50;
-
         //this is to get around the max value of a byte in java (2^7 -1)
-        byte b = 0;
-        b ^= 0xE8;
+        byte E8 = 0; E8 ^= 0xE8;
+        byte[] sensorSettings2 = new byte[]{0x02, 0x09, 0x02, 0x01, E8, 0x03,  0x64, 0x14, 0x32, 0, 0};
 
-        byte imuSamplingRate = 0; imuSamplingRate ^= 0xFA;
-
-        //byte[] sensorSettings = getMyoSensorSettings();
-        byte[] sensorSettings2 = new byte[]{0x02, 0x09, 0x02, 0x01, b, 0x03,  0x64, 0x14, 0x32, 0, 0};
-        byte[] sensorSettings3 = new byte[]{0x02, 0x09, 0x02, 0x01, b, 0x03,  0x64, 0x14, 0x32, 0, 0};
-        byte[] sensorSettings4 = {(byte)0b00000010, (byte)0b00001001, (byte)0b00000010, (byte)0b00000001, (byte)0b11101000, (byte)0b00000011, (byte)0b1100100, (byte)0b10100, (byte)0b110010, (byte)0b00000000, (byte)0b00000000};
-        //[2 9 2 1 e8 3 64 14 32 0 0 ]
-
-        writeAttr(MYO_SENSOR_SETTINGS, sensorSettings2);
-
-    }
-
-
-
-    @Override
-    public void receive_attclient_procedure_completed(int connection, int result, int chrhandle) {
-        logger.info("receive_attclient_procedure_completed " +chrhandle);
-        writeAttr = true;
-
-        if (result != 0) {
-            logger.error("ERROR: Attribute Procedure Completed with error code 0x" + Integer.toHexString(result));
-        }
+        writeAttr(MYO_SENSOR_SETTINGS, sensorSettings2).get();
     }
 
     @Override
@@ -205,35 +156,50 @@ public class MyoApplication extends BGAPIDefaultListener
         connection = connection_handle;
         connectAction.accept(connection_handle);
     }
-//0.0.8.0.18.0.2.0
 
     @Override
-    public void receive_attclient_attribute_value(int connection, int atthandle, int type, byte[] value) {
-        //logger.info("receive_attclient_attribute_value.");
-        //logger.info(String.format("AttrHandle[%d]  Type[%d]  DataSize:[%d]",atthandle,type,value.length));
-
+    public void receive_attclient_attribute_value(int connection, int atthandle, int type, byte[] data) {
         if (this.connection == connection) {
             switch (atthandle) {
-                case FIRMWARE:  firmwareInfoReceived(value);
-                case IMU_VALUE: imuDataReceived(value);
+                case FIRMWARE:  firmwareInfoReceived(data);
+                    break;
+                case IMU_VALUE: imuDataReceived(data);
+                    break;
+                case EMG_VALUE: emgDataReceived(data);
+                    break;
+                default:        logger.warn("Data received for unknown attr handle"+atthandle);
             }
-
         }
     }
 
-    private void imuDataReceived(byte[] value) {
+    private void emgDataReceived(byte[] emgData) {
+        int a = ((emgData[1] & 0xFF) << 8) + (emgData[0] & 0xFF); if (a > (1<<15)) { a = a - (1<<16); }
+        int b = ((emgData[3] & 0xFF) << 8) + (emgData[2] & 0xFF); if (b > (1<<15)) { b = b - (1<<16); }
+        int c = ((emgData[5] & 0xFF) << 8) + (emgData[4] & 0xFF); if (c > (1<<15)) { c = c - (1<<16); }
+        int d = ((emgData[7] & 0xFF) << 8) + (emgData[6] & 0xFF); if (d > (1<<15)) { d = d - (1<<16); }
+        int e = ((emgData[9] & 0xFF) << 8) + (emgData[8] & 0xFF); if (e > (1<<15)) { e = e - (1<<16); }
+        int f = ((emgData[11] & 0xFF) << 8) + (emgData[10] & 0xFF); if (f > (1<<15)) { f = f - (1<<16); }
+        int g = ((emgData[13] & 0xFF) << 8) + (emgData[12] & 0xFF); if (g > (1<<15)) { g = g - (1<<16); }
+        int h = ((emgData[15] & 0xFF) << 8) + (emgData[14] & 0xFF); if (h > (1<<15)) { h = h - (1<<16); }
+        if (emgAction != null) {
+            emgAction.accept(Arrays.asList(new Integer[]{a, b, c, d, e, f, g, h}));
+        }
+        logger.debug(String.format("EMG: %d %d %d %d %d %d %d %d ", a, b, c, d, e, f, g, h));
+    }
 
-        //total guesses - this is come copy and paste code that is most likely wrong
-        int gx = ((value[1] & 0xFF) << 8) + (value[0] & 0xFF); if (gx > (1<<15)) { gx = gx - (1<<16); }
-        int gy = ((value[3] & 0xFF) << 8) + (value[2] & 0xFF); if (gy > (1<<15)) { gy = gy - (1<<16); }
-        int gz = ((value[5] & 0xFF) << 8) + (value[4] & 0xFF); if (gz > (1<<15)) { gz = gz - (1<<16); }
+    private void imuDataReceived(byte[] imuData) {
 
-        int ax = ((value[7] & 0xFF) << 8) + (value[6] & 0xFF); if (ax > (1<<15)) { ax = ax - (1<<16); }
-        int ay = ((value[9] & 0xFF) << 8) + (value[8] & 0xFF); if (ay > (1<<15)) { ay = ay - (1<<16); }
-        int az = ((value[11] & 0xFF) << 8) + (value[10] & 0xFF); if (az > (1<<15)) { az = az - (1<<16); }
+        int gx = ((imuData[1] & 0xFF) << 8) + (imuData[0] & 0xFF); if (gx > (1<<15)) { gx = gx - (1<<16); }
+        int gy = ((imuData[3] & 0xFF) << 8) + (imuData[2] & 0xFF); if (gy > (1<<15)) { gy = gy - (1<<16); }
+        int gz = ((imuData[5] & 0xFF) << 8) + (imuData[4] & 0xFF); if (gz > (1<<15)) { gz = gz - (1<<16); }
 
-        //logger.info(bytesToHex(value));
-        logger.info(String.format("IMU gx: %d  gy: %d  gz: %d  ax: %d  ay: %d  az: %d",gx,gy,gz,ax,ay,az));
+        int ax = ((imuData[7] & 0xFF) << 8) + (imuData[6] & 0xFF); if (ax > (1<<15)) { ax = ax - (1<<16); }
+        int ay = ((imuData[9] & 0xFF) << 8) + (imuData[8] & 0xFF); if (ay > (1<<15)) { ay = ay - (1<<16); }
+        int az = ((imuData[11] & 0xFF) << 8) + (imuData[10] & 0xFF); if (az > (1<<15)) { az = az - (1<<16); }
+
+        imuAction.accept(new Integer[]{gx, gy, gz, ax, ay, az});
+
+        logger.debug(String.format("IMU gx: %d  gy: %d  gz: %d  ax: %d  ay: %d  az: %d", gx, gy, gz, ax, ay, az));
     }
 
 
@@ -245,8 +211,6 @@ public class MyoApplication extends BGAPIDefaultListener
     @Override
     public void receive_attclient_read_by_handle(int connection, int result) {
         logger.info(String.format("receive_attclient_read_by_handle !!! %d %d",connection, result));
-
-
     }
 
     @Override
@@ -273,8 +237,6 @@ public class MyoApplication extends BGAPIDefaultListener
         logger.info(" !!!");
     }
 
-
-
     @Override
     public void receive_connection_features_get(int connection, int result) {
         logger.info("receive_connection_features_get !!! "+ result);
@@ -284,6 +246,9 @@ public class MyoApplication extends BGAPIDefaultListener
     public void receive_attclient_attribute_write(int connection, int result) {
         logger.info("receive_attclient_attribute_write !!!");
     }
+
+    @Override
+    public void receive_attclient_procedure_completed(int connection, int result, int chrhandle) {}
 
     @Override
     public void receive_system_reset() {

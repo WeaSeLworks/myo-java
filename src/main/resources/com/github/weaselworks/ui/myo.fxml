@@ -37,7 +37,7 @@
    <right>
       <VBox prefHeight="200.0" prefWidth="100.0" BorderPane.alignment="CENTER">
          <children>
-            <Button fx:id="fimwareButton" mnemonicParsing="false" onAction="#getTheFirmware" prefHeight="26.0" prefWidth="100.0" text="Info">
+            <Button fx:id="fimwareButton" mnemonicParsing="false" onAction="#subscribeToMyoData" prefHeight="26.0" prefWidth="100.0" text="Show Data">
                <VBox.margin>
                   <Insets right="10.0" top="10.0" />
                </VBox.margin>
@@ -46,4 +46,12 @@
          </children>
       </VBox>
    </right>
+   <top>
+      <VBox alignment="CENTER" prefHeight="53.0" prefWidth="800.0" BorderPane.alignment="CENTER">
+         <children>
+            <Label fx:id="imuData" alignment="CENTER" prefHeight="16.0" prefWidth="241.0" />
+            <Label fx:id="emgData" />
+         </children>
+      </VBox>
+   </top>
 </BorderPane>
