@@ -51,6 +51,7 @@
          <children>
             <Label fx:id="imuData" alignment="CENTER" prefHeight="16.0" prefWidth="241.0" />
             <Label fx:id="emgData" />
+            <Label fx:id="pose" />
          </children>
       </VBox>
    </top>

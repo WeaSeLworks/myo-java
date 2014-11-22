@@ -25,19 +25,28 @@ repositories {
      jcenter()
      maven { url "http://maven.thingml.org/thingml-release/" }
      maven {url 'http://www.sparetimelabs.com/maven2'}
+     flatDir { dirs 'lib' }
+
 }
 
 dependencies{
     compile 'org.slf4j:slf4j-api:1.7.5'
     compile 'org.slf4j:slf4j-simple:1.7.5'
     compile 'org.thingml:bglib-protocol-1.0.3-43:1.1.0'
-    //compile 'org.thingml:bglib-gui:1.1.0'
     compile 'com.sparetimelabs:purejavacomm:0.0.22'
     compile 'commons-io:commons-io:2.4'
     compile 'ch.qos.logback:logback-classic:1.1.2'
     compile 'ch.qos.logback:logback-core:1.1.2'
     compile 'commons-codec:commons-codec:1.9'
     compile 'com.airhacks:afterburner.fx:1.6.0'
+
+    //java-ml
+    compile name: 'Jama-1.0.2'
+    compile name: 'ajt-2.9'
+    compile name: 'commons-math-1.2'
+    compile name: 'javaml-0.1.7'
+    compile name: 'libsvm'
+    compile name: 'weka'
 }
 
 

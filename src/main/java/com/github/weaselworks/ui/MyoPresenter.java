@@ -10,6 +10,7 @@ import javafx.fxml.Initializable;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
+import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import org.slf4j.Logger;
@@ -18,8 +19,12 @@ import org.slf4j.LoggerFactory;
 import javax.inject.Inject;
 import java.net.URL;
 import java.util.ResourceBundle;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
+
+import static java.lang.Math.abs;
 
 
 /**
@@ -28,6 +33,8 @@ import java.util.stream.Collectors;
 public class MyoPresenter implements Initializable {
 
     static Logger logger = LoggerFactory.getLogger(MyoPresenter.class);
+
+    private final Timer t = new Timer();
 
     private int connectionId =-1;
 
@@ -54,8 +61,14 @@ public class MyoPresenter implements Initializable {
     @FXML
     private Label emgData;
 
+    @FXML
+    private Label pose;
+
     @Inject
     private MyoApplication myo;
+
+    @Inject
+    private ImageView pic;
 
     @FXML
     private void subscribeToMyoData(ActionEvent e) throws ExecutionException, InterruptedException {
@@ -63,15 +76,20 @@ public class MyoPresenter implements Initializable {
 
         myo.subscribeMyoData(imus -> {
             Platform.runLater(() -> {
-                imuData.setText(String.format("IMU x: %d y: %d z: %d", imus[0], imus[1], imus[2]));
+                imuData.setText(String.format("IMU x: %d y: %d z: %d", divide(imus[0],100) , divide(imus[1],100), divide(imus[2],100)));
             });
         }, emgs -> {
             Platform.runLater(() -> {
                 String emgInfo = emgs.stream().map(Object::toString)
                         .collect(Collectors.joining(", "));
-                emgData.setText(String.format("EMG %s", emgInfo));
+                //emgData.setText(String.format("EMG %s", emgInfo));
             });
         });
+    }
+
+    private  static long divide(long num, long divisor) {
+        int sign = (num > 0 ? 1 : -1) * (divisor > 0 ? 1 : -1);
+        return sign * (abs(num) + abs(divisor) - 1) / abs(divisor);
     }
 
     @FXML
@@ -136,6 +154,34 @@ public class MyoPresenter implements Initializable {
                 }
             });
         });
+
+        myo.onPose(pose -> {
+            Platform.runLater(() -> {
+                this.pose.setText("FIST");
+
+            });
+
+
+
+            final Label theLabel = this.pose;
+
+            final TimerTask task = new TimerTask() { public void run() {
+                Platform.runLater(() -> {
+                    theLabel.setText("");
+                });
+            }};
+            t.schedule(task, 750);
+
+
+        });
+    }
+
+    /**
+     * called on exit 
+     */
+    public void shutdown() {
+        t.cancel();
+        t.purge();
     }
 
     private boolean isConnected() {

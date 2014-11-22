@@ -32,6 +32,8 @@ public class MyoAppUI extends Application {
     @Override
     public void stop() throws Exception {
         Injector.forgetAll();
+        MyoPresenter presenter = (MyoPresenter) appView.getPresenter();
+        presenter.shutdown();
     }
 
 

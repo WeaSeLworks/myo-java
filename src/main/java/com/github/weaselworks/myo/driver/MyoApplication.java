@@ -16,6 +16,11 @@
 package com.github.weaselworks.myo.driver;
 
 
+import net.sf.javaml.classification.Classifier;
+import net.sf.javaml.classification.KNearestNeighbors;
+import net.sf.javaml.core.Dataset;
+import net.sf.javaml.core.DenseInstance;
+import net.sf.javaml.core.Instance;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.thingml.bglib.BDAddr;
@@ -23,10 +28,16 @@ import org.thingml.bglib.BGAPI;
 import org.thingml.bglib.BGAPIDefaultListener;
 
 import javax.annotation.PreDestroy;
+import java.io.File;
+import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.IntFunction;
+
+import static net.sf.javaml.tools.data.FileHandler.loadDataset;
 
 public class MyoApplication extends BGAPIDefaultListener
 {
@@ -57,6 +68,8 @@ public class MyoApplication extends BGAPIDefaultListener
     private Consumer<String> firmwareAction;
     private Consumer<Integer[]> imuAction;
     private Consumer<List<Integer>> emgAction;
+    private Consumer<Integer> pose;
+    private Classifier knn;
 
 
 
@@ -71,7 +84,16 @@ public class MyoApplication extends BGAPIDefaultListener
 
 
     public MyoApplication(){
-
+        Dataset data = null;
+        try {
+            data = loadDataset(new File(MyoApplication.class.getResource("/fist.data").toURI()), 8, ",");
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (URISyntaxException e) {
+            e.printStackTrace();
+        }
+        this.knn = new KNearestNeighbors(10);
+        knn.buildClassifier(data);
     }
 
     public void start(){
@@ -172,6 +194,10 @@ public class MyoApplication extends BGAPIDefaultListener
         }
     }
 
+    public void onPose(Consumer<Integer> poseFunction) {
+        this.pose = poseFunction;
+    }
+
     private void emgDataReceived(byte[] emgData) {
         int a = ((emgData[1] & 0xFF) << 8) + (emgData[0] & 0xFF); if (a > (1<<15)) { a = a - (1<<16); }
         int b = ((emgData[3] & 0xFF) << 8) + (emgData[2] & 0xFF); if (b > (1<<15)) { b = b - (1<<16); }
@@ -183,6 +209,12 @@ public class MyoApplication extends BGAPIDefaultListener
         int h = ((emgData[15] & 0xFF) << 8) + (emgData[14] & 0xFF); if (h > (1<<15)) { h = h - (1<<16); }
         if (emgAction != null) {
             emgAction.accept(Arrays.asList(new Integer[]{a, b, c, d, e, f, g, h}));
+        }
+        Instance instance = new DenseInstance(new double[]{a, b, c, d, e, f, g, h});
+        String classification = (String) knn.classify(instance);
+        if (classification != null && classification.equals("FIST") && pose != null){
+            logger.info(String.format("Pose: %s ", classification));
+            pose.accept(0);
         }
         logger.debug(String.format("EMG: %d %d %d %d %d %d %d %d ", a, b, c, d, e, f, g, h));
     }
