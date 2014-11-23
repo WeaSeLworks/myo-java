@@ -2,6 +2,7 @@
 package com.github.weaselworks.ui;
 
 import com.github.weaselworks.myo.driver.MyoApplication;
+import com.github.weaselworks.myo.driver.Pose;
 import javafx.application.Platform;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -9,7 +10,9 @@ import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
+import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
@@ -18,10 +21,9 @@ import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import java.net.URL;
-import java.util.ResourceBundle;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static java.lang.Math.abs;
@@ -38,7 +40,12 @@ public class MyoPresenter implements Initializable {
 
     private int connectionId =-1;
 
-    private ObservableList<String> data;
+    private boolean neverConnected = true;
+
+
+    final Map<Pose, Image> images = new HashMap<Pose, Image>();
+
+
 
     @FXML
     private Button connectButton;
@@ -47,7 +54,7 @@ public class MyoPresenter implements Initializable {
     private Label connectionStatus;
 
     @FXML
-    private ListView<String> deviceList;
+    private ListView<BluetoothDevice> deviceList;
 
     @FXML
     private Button firmwareButton;
@@ -64,11 +71,11 @@ public class MyoPresenter implements Initializable {
     @FXML
     private Label pose;
 
-    @Inject
-    private MyoApplication myo;
+    @FXML
+    private ImageView gesturePic;
 
     @Inject
-    private ImageView pic;
+    private MyoApplication myo;
 
     @FXML
     private void subscribeToMyoData(ActionEvent e) throws ExecutionException, InterruptedException {
@@ -87,11 +94,6 @@ public class MyoPresenter implements Initializable {
         });
     }
 
-    private  static long divide(long num, long divisor) {
-        int sign = (num > 0 ? 1 : -1) * (divisor > 0 ? 1 : -1);
-        return sign * (abs(num) + abs(divisor) - 1) / abs(divisor);
-    }
-
     @FXML
     private void onClick(MouseEvent mouseEvent) {
         if(mouseEvent.getButton().equals(MouseButton.PRIMARY)){
@@ -107,11 +109,11 @@ public class MyoPresenter implements Initializable {
     }
 
     private void connectToSelected() {
-        String selectedDevice = deviceList.getSelectionModel()
+        BluetoothDevice selectedDevice = deviceList.getSelectionModel()
                 .getSelectedItem();
         if (!isConnected()) {
             if (selectedDevice != null) {
-                myo.connect(selectedDevice, connId -> {
+                myo.connect(selectedDevice.getAddress().toString(), connId -> {
                     Platform.runLater(() -> {
                         connectButton.setText("Disconnect");
                         connectionId = connId;
@@ -126,6 +128,7 @@ public class MyoPresenter implements Initializable {
                     connectButton.setText("Connect");
                     connectionId = -1;
                     connectionStatus.setText("Status: Idle");
+                    deviceList.getSelectionModel().clearSelection();
                 });
             });
         }
@@ -145,12 +148,36 @@ public class MyoPresenter implements Initializable {
     public void initialize(URL location, ResourceBundle resources) {
 
         myo.start();
-        ObservableList<String> devices = deviceList.getItems();
+        ObservableList<BluetoothDevice> devices = deviceList.getItems();
+        images.put(Pose.FIST, new Image("com/github/weaselworks/ui/Fist.png"));
+        images.put(Pose.SPREAD, new Image("com/github/weaselworks/ui/Spread.png"));
+        images.put(Pose.LEFT, new Image("com/github/weaselworks/ui/Left.png"));
+        images.put(Pose.RIGHT, new Image("com/github/weaselworks/ui/Right.png"));
+
+        deviceList.setCellFactory(cellData -> {
+            ListCell<BluetoothDevice> cell = new ListCell<BluetoothDevice>() {
+                @Override
+                protected void updateItem(BluetoothDevice device, boolean bln) {
+                    super.updateItem(device, bln);
+                    if (device != null) {
+                        setText(device.getAlias());
+                    }
+                }
+            };
+            return cell;
+
+        });
 
         myo.onDeviceFound(addr -> {
             Platform.runLater(() -> {
-                if (!devices.contains(addr.toString())) {
-                    devices.add(addr.toString());
+                BluetoothDevice newDevice = new BluetoothDevice(addr);
+                if (!deviceList.getItems().contains(newDevice) && newDevice.isMyo()) {
+                    devices.add(newDevice);
+                    if (neverConnected && connectionId < 0) {
+                        deviceList.getSelectionModel().select(newDevice);
+                        connectToSelected();
+                        neverConnected = false;
+                    }
                 }
             });
         });
@@ -158,7 +185,7 @@ public class MyoPresenter implements Initializable {
         myo.onPose(pose -> {
             Platform.runLater(() -> {
                 this.pose.setText(pose.getName());
-
+                this.gesturePic.setImage(images.get(pose));
             });
 
             //only display for a short period of time
@@ -166,12 +193,20 @@ public class MyoPresenter implements Initializable {
             final TimerTask task = new TimerTask() { public void run() {
                 Platform.runLater(() -> {
                     theLabel.setText("");
+                    gesturePic.setImage(null);
                 });
             }};
             t.schedule(task, 500);
 
 
         });
+    }
+
+
+
+    private  static long divide(long num, long divisor) {
+        int sign = (num > 0 ? 1 : -1) * (divisor > 0 ? 1 : -1);
+        return sign * (abs(num) + abs(divisor) - 1) / abs(divisor);
     }
 
     /**

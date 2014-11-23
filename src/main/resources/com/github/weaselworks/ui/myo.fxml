@@ -27,13 +27,6 @@
          </font>
       </Label>
    </bottom>
-   <center>
-      <ImageView fitHeight="231.0" fitWidth="377.0" mouseTransparent="true" pickOnBounds="true" preserveRatio="true" BorderPane.alignment="CENTER">
-         <image>
-            <Image url="@../../../../images/myo.jpg" />
-         </image>
-      </ImageView>
-   </center>
    <right>
       <VBox prefHeight="200.0" prefWidth="100.0" BorderPane.alignment="CENTER">
          <children>
@@ -55,4 +48,11 @@
          </children>
       </VBox>
    </top>
+   <center>
+      <StackPane prefHeight="150.0" prefWidth="200.0" BorderPane.alignment="CENTER">
+         <children>
+            <ImageView fx:id="gesturePic" fitHeight="150.0" fitWidth="200.0" pickOnBounds="true" preserveRatio="true" />
+         </children>
+      </StackPane>
+   </center>
 </BorderPane>

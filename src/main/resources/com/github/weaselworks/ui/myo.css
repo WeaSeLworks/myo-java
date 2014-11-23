@@ -1,0 +1,42 @@
+.root {
+
+    -fx-background-image: url("Weaselworks-background.png");
+    -fx-background-size: cover, auto;
+}
+
+
+.button {
+  -fx-background-color: transparent;
+  -fx-text-fill: #FFF;
+  -fx-border: 1px solid #FFF;
+
+}
+
+.list-view {
+    -fx-background-color: transparent;
+    -fx-background-radius: 0;
+    -fx-background-insets: 0;
+    -fx-padding: 0;
+}
+
+//-fx-background-color: linear-gradient(#328BDB 0%, #207BCF 25%, #1973C9 75%, #0A65BF 100%);
+
+.list-cell:filled:selected:focused, .list-cell:filled:selected {
+    -fx-background-color: #16beed;
+    -fx-text-fill: white;
+}
+
+.list-cell:even { /* <=== changed to even */
+    -fx-background-color: transparent;
+}
+
+.list-cell:odd { /* <=== changed to even */
+    -fx-background-color: transparent;
+}
+
+
+
+.list-cell:filled:hover {
+    -fx-background-color: #0093ff;
+    -fx-text-fill: white;
+}

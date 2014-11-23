@@ -47,6 +47,8 @@ dependencies{
     compile name: 'javaml-0.1.7'
     compile name: 'libsvm'
     compile name: 'weka'
+
+    testCompile 'junit:junit:4.11'
 }
 
 
@@ -84,5 +86,9 @@ javafx {
 
 String getProjectProperty(String propertyName) {
     project.hasProperty(propertyName) ? project.property(propertyName) : null
+}
+
+cssToBin {
+    enabled = false //7u21 has some font bugs in the BSS code
 }
 

@@ -52,10 +52,7 @@ public class MyoApplication extends BGAPIDefaultListener
     public static final int EMG_VALUE = 39;
 
     private static final int IDLE = 0;
-    private static final int SERVICES = 1;
-    private static final int ATTRIBUTES = 2;
-    private int discovery_state = IDLE;
-   
+
 
 
     private BGAPI client;
@@ -84,10 +81,10 @@ public class MyoApplication extends BGAPIDefaultListener
 
     public MyoApplication(){
         Dataset allPoses = new DefaultDataset();
-        allPoses.addAll(loadDatasetFromPoseFile("fist.data"));
-        allPoses.addAll(loadDatasetFromPoseFile("spread.data"));
-        allPoses.addAll(loadDatasetFromPoseFile("left.data"));
-        allPoses.addAll(loadDatasetFromPoseFile("right.data"));
+        allPoses.addAll(loadDatasetFromPoseFile("gestures/fist.data"));
+        allPoses.addAll(loadDatasetFromPoseFile("gestures/spread.data"));
+        allPoses.addAll(loadDatasetFromPoseFile("gestures/left.data"));
+        allPoses.addAll(loadDatasetFromPoseFile("gestures/right.data"));
 
         this.knn = new KNearestNeighbors(10);
         knn.buildClassifier(allPoses);
