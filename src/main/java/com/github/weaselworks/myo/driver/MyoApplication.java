@@ -84,22 +84,25 @@ public class MyoApplication extends BGAPIDefaultListener
 
     public MyoApplication(){
         Dataset allPoses = new DefaultDataset();
+        allPoses.addAll(loadDatasetFromPoseFile("fist.data"));
+        allPoses.addAll(loadDatasetFromPoseFile("spread.data"));
+        allPoses.addAll(loadDatasetFromPoseFile("left.data"));
+        allPoses.addAll(loadDatasetFromPoseFile("right.data"));
 
-        Dataset fistData = null;
-        Dataset spreadData = null;
+        this.knn = new KNearestNeighbors(10);
+        knn.buildClassifier(allPoses);
+    }
+
+    private Dataset loadDatasetFromPoseFile(String filename){
+        Dataset newDataset = null;
         try {
-            fistData = loadDataset(new File(MyoApplication.class.getResource("/fist.data").toURI()), 8, ",");
-            spreadData = loadDataset(new File(MyoApplication.class.getResource("/spread.data").toURI()), 8, ",");
+            newDataset = loadDataset(new File(MyoApplication.class.getResource(String.format("/%s",filename)).toURI()), 8, ",");
         } catch (IOException e) {
             e.printStackTrace();
         } catch (URISyntaxException e) {
             e.printStackTrace();
         }
-        allPoses.addAll(fistData);
-        allPoses.addAll(spreadData);
-
-        this.knn = new KNearestNeighbors(10);
-        knn.buildClassifier(allPoses);
+        return  newDataset;
     }
 
     public void start(){

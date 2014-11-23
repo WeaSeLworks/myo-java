@@ -5,9 +5,11 @@ package com.github.weaselworks.myo.driver;
  */
 public enum Pose {
 
-    UNKNOWN("x"),
     FIST("FIST"),
-    SPREAD("SPREAD");
+    SPREAD("SPREAD"),
+    LEFT("LEFT"),
+    RIGHT("RIGHT"),
+    UNKNOWN("x");
 
     private String poseName;
 
@@ -20,6 +22,8 @@ public enum Pose {
         switch (pose){
             case "FIST": return Pose.FIST;
             case "SPREAD": return Pose.SPREAD;
+            case "LEFT": return Pose.LEFT;
+            case "RIGHT": return Pose.RIGHT;
             default: return UNKNOWN;
         }
     }
