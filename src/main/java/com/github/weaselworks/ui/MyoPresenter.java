@@ -157,27 +157,25 @@ public class MyoPresenter implements Initializable {
 
         myo.onPose(pose -> {
             Platform.runLater(() -> {
-                this.pose.setText("FIST");
+                this.pose.setText(pose.getName());
 
             });
 
-
-
+            //only display for a short period of time
             final Label theLabel = this.pose;
-
             final TimerTask task = new TimerTask() { public void run() {
                 Platform.runLater(() -> {
                     theLabel.setText("");
                 });
             }};
-            t.schedule(task, 750);
+            t.schedule(task, 500);
 
 
         });
     }
 
     /**
-     * called on exit 
+     * called on exit
      */
     public void shutdown() {
         t.cancel();

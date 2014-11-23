@@ -19,6 +19,7 @@ package com.github.weaselworks.myo.driver;
 import net.sf.javaml.classification.Classifier;
 import net.sf.javaml.classification.KNearestNeighbors;
 import net.sf.javaml.core.Dataset;
+import net.sf.javaml.core.DefaultDataset;
 import net.sf.javaml.core.DenseInstance;
 import net.sf.javaml.core.Instance;
 import org.slf4j.Logger;
@@ -34,8 +35,6 @@ import java.net.URISyntaxException;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.IntFunction;
 
 import static net.sf.javaml.tools.data.FileHandler.loadDataset;
 
@@ -68,7 +67,7 @@ public class MyoApplication extends BGAPIDefaultListener
     private Consumer<String> firmwareAction;
     private Consumer<Integer[]> imuAction;
     private Consumer<List<Integer>> emgAction;
-    private Consumer<Integer> pose;
+    private Consumer<Pose> poseAction;
     private Classifier knn;
 
 
@@ -84,16 +83,23 @@ public class MyoApplication extends BGAPIDefaultListener
 
 
     public MyoApplication(){
-        Dataset data = null;
+        Dataset allPoses = new DefaultDataset();
+
+        Dataset fistData = null;
+        Dataset spreadData = null;
         try {
-            data = loadDataset(new File(MyoApplication.class.getResource("/fist.data").toURI()), 8, ",");
+            fistData = loadDataset(new File(MyoApplication.class.getResource("/fist.data").toURI()), 8, ",");
+            spreadData = loadDataset(new File(MyoApplication.class.getResource("/spread.data").toURI()), 8, ",");
         } catch (IOException e) {
             e.printStackTrace();
         } catch (URISyntaxException e) {
             e.printStackTrace();
         }
+        allPoses.addAll(fistData);
+        allPoses.addAll(spreadData);
+
         this.knn = new KNearestNeighbors(10);
-        knn.buildClassifier(data);
+        knn.buildClassifier(allPoses);
     }
 
     public void start(){
@@ -194,8 +200,8 @@ public class MyoApplication extends BGAPIDefaultListener
         }
     }
 
-    public void onPose(Consumer<Integer> poseFunction) {
-        this.pose = poseFunction;
+    public void onPose(Consumer<Pose> poseFunction) {
+        this.poseAction = poseFunction;
     }
 
     private void emgDataReceived(byte[] emgData) {
@@ -212,9 +218,10 @@ public class MyoApplication extends BGAPIDefaultListener
         }
         Instance instance = new DenseInstance(new double[]{a, b, c, d, e, f, g, h});
         String classification = (String) knn.classify(instance);
-        if (classification != null && classification.equals("FIST") && pose != null){
+        Pose pose = Pose.fromString(classification);
+        if (pose.isKnownPose()){
             logger.info(String.format("Pose: %s ", classification));
-            pose.accept(0);
+            poseAction.accept(pose);
         }
         logger.debug(String.format("EMG: %d %d %d %d %d %d %d %d ", a, b, c, d, e, f, g, h));
     }
