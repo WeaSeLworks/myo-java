@@ -1,8 +1,15 @@
-.root {
+.bg {
 
     -fx-background-image: url("Weaselworks-background.png");
     -fx-background-size: cover, auto;
 }
+
+.bg-connected {
+
+    -fx-background-image: url("Weaselworks-background-connected.png");
+    -fx-background-size: cover, auto;
+}
+
 
 
 .button {

@@ -23,7 +23,6 @@ import javax.inject.Inject;
 import java.net.URL;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static java.lang.Math.abs;
@@ -119,6 +118,7 @@ public class MyoPresenter implements Initializable {
                         connectionId = connId;
                         connectionStatus.setText(String.format("Connected [%s]", connId));
                     });
+                    setLogoVisible(true);
                 });
             }
         }
@@ -130,6 +130,7 @@ public class MyoPresenter implements Initializable {
                     connectionStatus.setText("Status: Idle");
                     deviceList.getSelectionModel().clearSelection();
                 });
+                setLogoVisible(false);
             });
         }
 
@@ -153,6 +154,7 @@ public class MyoPresenter implements Initializable {
         images.put(Pose.SPREAD, new Image("com/github/weaselworks/ui/Spread.png"));
         images.put(Pose.LEFT, new Image("com/github/weaselworks/ui/Left.png"));
         images.put(Pose.RIGHT, new Image("com/github/weaselworks/ui/Right.png"));
+
 
         deviceList.setCellFactory(cellData -> {
             ListCell<BluetoothDevice> cell = new ListCell<BluetoothDevice>() {
@@ -181,6 +183,7 @@ public class MyoPresenter implements Initializable {
                 }
             });
         });
+        
 
         myo.onPose(pose -> {
             Platform.runLater(() -> {
@@ -190,18 +193,28 @@ public class MyoPresenter implements Initializable {
 
             //only display for a short period of time
             final Label theLabel = this.pose;
-            final TimerTask task = new TimerTask() { public void run() {
-                Platform.runLater(() -> {
-                    theLabel.setText("");
-                    gesturePic.setImage(null);
-                });
-            }};
+            final TimerTask task = new TimerTask() {
+                public void run() {
+                    Platform.runLater(() -> {
+                        theLabel.setText("");
+                        gesturePic.setImage(null);
+                    });
+                }
+            };
             t.schedule(task, 500);
 
 
         });
     }
 
+
+    private void setLogoVisible(boolean visible){
+        String styleClass = visible ? "bg-connected" : "bg";
+        Platform.runLater(() -> {
+            gesturePic.getParent().getParent().getStyleClass().clear();
+            gesturePic.getParent().getParent().getStyleClass().add(styleClass);
+        });
+    }
 
 
     private  static long divide(long num, long divisor) {
