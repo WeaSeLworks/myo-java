@@ -76,21 +76,27 @@ public class MyoPresenter implements Initializable {
     @Inject
     private MyoApplication myo;
 
-    @FXML
-    private void subscribeToMyoData(ActionEvent e) throws ExecutionException, InterruptedException {
+
+    private void subscribeToMyoData()  {
         logger.info("Subscribing to myo data");
 
-        myo.subscribeMyoData(imus -> {
-            Platform.runLater(() -> {
-                imuData.setText(String.format("IMU x: %d y: %d z: %d", divide(imus[0],100) , divide(imus[1],100), divide(imus[2],100)));
+        try {
+            myo.subscribeMyoData(imus -> {
+                Platform.runLater(() -> {
+                    imuData.setText(String.format("IMU x: %d y: %d z: %d", divide(imus[0],100) , divide(imus[1],100), divide(imus[2],100)));
+                });
+            }, emgs -> {
+                Platform.runLater(() -> {
+                    String emgInfo = emgs.stream().map(Object::toString)
+                            .collect(Collectors.joining(", "));
+                    //emgData.setText(String.format("EMG %s", emgInfo));
+                });
             });
-        }, emgs -> {
-            Platform.runLater(() -> {
-                String emgInfo = emgs.stream().map(Object::toString)
-                        .collect(Collectors.joining(", "));
-                //emgData.setText(String.format("EMG %s", emgInfo));
-            });
-        });
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
     @FXML
@@ -117,6 +123,8 @@ public class MyoPresenter implements Initializable {
                         connectButton.setText("Disconnect");
                         connectionId = connId;
                         connectionStatus.setText(String.format("Connected [%s]", connId));
+                        imuData.setVisible(true);
+                        schedule(() -> { subscribeToMyoData(); },1500);
                     });
                     setLogoVisible(true);
                 });
@@ -129,6 +137,7 @@ public class MyoPresenter implements Initializable {
                     connectionId = -1;
                     connectionStatus.setText("Status: Idle");
                     deviceList.getSelectionModel().clearSelection();
+                    imuData.setVisible(false);
                 });
                 setLogoVisible(false);
             });
@@ -173,7 +182,7 @@ public class MyoPresenter implements Initializable {
         myo.onDeviceFound(addr -> {
             Platform.runLater(() -> {
                 BluetoothDevice newDevice = new BluetoothDevice(addr);
-                if (!deviceList.getItems().contains(newDevice) && newDevice.isMyo()) {
+                if (!deviceList.getItems().contains(newDevice)) {
                     devices.add(newDevice);
                     if (neverConnected && connectionId < 0) {
                         deviceList.getSelectionModel().select(newDevice);
@@ -183,7 +192,6 @@ public class MyoPresenter implements Initializable {
                 }
             });
         });
-        
 
         myo.onPose(pose -> {
             Platform.runLater(() -> {
@@ -193,16 +201,12 @@ public class MyoPresenter implements Initializable {
 
             //only display for a short period of time
             final Label theLabel = this.pose;
-            final TimerTask task = new TimerTask() {
-                public void run() {
-                    Platform.runLater(() -> {
-                        theLabel.setText("");
-                        gesturePic.setImage(null);
-                    });
-                }
-            };
-            t.schedule(task, 500);
-
+            schedule(() -> {
+                Platform.runLater(() -> {
+                    theLabel.setText("");
+                    gesturePic.setImage(null);
+                });
+            },500);
 
         });
     }
@@ -220,6 +224,14 @@ public class MyoPresenter implements Initializable {
     private  static long divide(long num, long divisor) {
         int sign = (num > 0 ? 1 : -1) * (divisor > 0 ? 1 : -1);
         return sign * (abs(num) + abs(divisor) - 1) / abs(divisor);
+    }
+
+
+
+    public TimerTask schedule(final Runnable r, long delay) {
+        final TimerTask task = new TimerTask() { public void run() { r.run(); }};
+        t.schedule(task, delay);
+        return task;
     }
 
     /**

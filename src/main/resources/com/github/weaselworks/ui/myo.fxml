@@ -12,14 +12,6 @@
 <?import javafx.scene.control.Label?>
 
 <BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="800.0" styleClass="bg" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.github.weaselworks.ui.MyoPresenter">
-   <left>
-      <VBox prefHeight="387.0" prefWidth="139.0" BorderPane.alignment="CENTER">
-         <children>
-            <ListView fx:id="deviceList" onMouseClicked="#onClick" prefHeight="361.0" prefWidth="134.0" />
-            <Button fx:id="connectButton" mnemonicParsing="false" onAction="#connectBtnAction" prefHeight="26.0" prefWidth="139.0" text="Connect" />
-         </children>
-      </VBox>
-   </left>
    <bottom>
       <Label fx:id="connectionStatus" text="Status: Idle" textFill="#6f6f6f" BorderPane.alignment="BOTTOM_RIGHT">
          <font>
@@ -27,29 +19,36 @@
          </font>
       </Label>
    </bottom>
-   <right>
-      <VBox prefHeight="200.0" prefWidth="100.0" BorderPane.alignment="CENTER">
-         <children>
-            <Button fx:id="fimwareButton" mnemonicParsing="false" onAction="#subscribeToMyoData" prefHeight="26.0" prefWidth="100.0" text="Show Data">
-               <VBox.margin>
-                  <Insets right="10.0" top="10.0" />
-               </VBox.margin>
-            </Button>
-            <Label fx:id="firmware" />
-         </children>
-      </VBox>
-   </right>
    <top>
-      <VBox alignment="CENTER" prefHeight="53.0" prefWidth="800.0" BorderPane.alignment="CENTER">
+      <VBox alignment="CENTER" prefHeight="127.0" prefWidth="800.0" BorderPane.alignment="CENTER">
          <children>
-            <Label fx:id="imuData" alignment="CENTER" prefHeight="16.0" prefWidth="241.0" />
-            <Label fx:id="emgData" />
-            <Label fx:id="pose" />
+            <HBox prefHeight="130.0" prefWidth="800.0">
+               <children>
+                  <VBox prefHeight="78.0" prefWidth="100.0">
+                     <children>
+                        <Label id="deviceListTitle" alignment="CENTER" prefHeight="39.0" prefWidth="100.0" text="Myos In Range" textAlignment="CENTER">
+                           <font>
+                              <Font size="12.0" />
+                           </font>
+                        </Label>
+                        <ListView fx:id="deviceList" onMouseClicked="#onClick" prefHeight="59.0" prefWidth="100.0" />
+                        <Button fx:id="connectButton" mnemonicParsing="false" onAction="#connectBtnAction" prefHeight="26.0" prefWidth="139.0" text="Connect" />
+                     </children>
+                  </VBox>
+                  <VBox alignment="CENTER" prefHeight="84.0" prefWidth="700.0" HBox.hgrow="ALWAYS">
+                     <children>
+                        <Label fx:id="imuData" alignment="CENTER" prefHeight="16.0" prefWidth="241.0" textFill="WHITE" />
+                        <Label fx:id="emgData" />
+                        <Label fx:id="pose" />
+                     </children>
+                  </VBox>
+               </children>
+            </HBox>
          </children>
       </VBox>
    </top>
    <center>
-      <StackPane prefHeight="150.0" prefWidth="200.0" BorderPane.alignment="CENTER">
+      <StackPane prefHeight="316.0" prefWidth="561.0" BorderPane.alignment="CENTER">
          <children>
             <ImageView fx:id="gesturePic" fitHeight="150.0" fitWidth="200.0" pickOnBounds="true" preserveRatio="true" />
          </children>
