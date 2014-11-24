@@ -25,6 +25,7 @@ repositories {
      jcenter()
      maven { url "http://maven.thingml.org/thingml-release/" }
      maven {url 'http://www.sparetimelabs.com/maven2'}
+     maven {url 'http://dl.bintray.com/skone/maven/'}
      flatDir { dirs 'lib' }
 
 }
@@ -39,6 +40,8 @@ dependencies{
     compile 'ch.qos.logback:logback-core:1.1.2'
     compile 'commons-codec:commons-codec:1.9'
     compile 'com.airhacks:afterburner.fx:1.6.0'
+
+    compile 'com.github.weaselworks:ChromeDriver:1.0'
 
     //java-ml
     compile name: 'Jama-1.0.2'
