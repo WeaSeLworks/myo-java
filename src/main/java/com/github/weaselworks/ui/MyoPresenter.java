@@ -216,10 +216,10 @@ public class MyoPresenter implements Initializable {
 
 
            switch (pose){
-                case FIST: myoPose.onFist();
-                case SPREAD:myoPose.onFingersSpread();
-                case LEFT: myoPose.onWaveIn();
-                case RIGHT: myoPose.onWaveOut();
+                case FIST:{ myoPose.onFist();break;}
+                case SPREAD:{myoPose.onFingersSpread();break;}
+                case LEFT: {myoPose.onWaveIn();break;}
+                case RIGHT: {myoPose.onWaveOut();break;}
             }
 
 
