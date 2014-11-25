@@ -162,7 +162,7 @@ public class MyoPresenter implements Initializable {
     public void initialize(URL location, ResourceBundle resources) {
 
         myo.start();
-        myoPose = new Debugger("raspberrypi.local",9222);
+        myoPose = new Debugger("chromebrowser.local",9222);
         ObservableList<BluetoothDevice> devices = deviceList.getItems();
         images.put(Pose.FIST, new Image("com/github/weaselworks/ui/Fist.png"));
         images.put(Pose.SPREAD, new Image("com/github/weaselworks/ui/Spread.png"));
