@@ -16,6 +16,8 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
+import org.chromium.sdk.internal.wip.Debugger;
+import org.chromium.sdk.internal.wip.IMyoPose;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,6 +42,8 @@ public class MyoPresenter implements Initializable {
     private int connectionId =-1;
 
     private boolean neverConnected = true;
+
+    private IMyoPose myoPose;
 
 
     final Map<Pose, Image> images = new HashMap<Pose, Image>();
@@ -159,6 +163,7 @@ public class MyoPresenter implements Initializable {
     public void initialize(URL location, ResourceBundle resources) {
 
         myo.start();
+        myoPose = new Debugger("chromebrowser.local",9222);
         ObservableList<BluetoothDevice> devices = deviceList.getItems();
         images.put(Pose.FIST, new Image("com/github/weaselworks/ui/Fist.png"));
         images.put(Pose.SPREAD, new Image("com/github/weaselworks/ui/Spread.png"));
@@ -201,6 +206,7 @@ public class MyoPresenter implements Initializable {
                 this.gesturePic.setImage(images.get(pose));
             });
 
+
             //only display for a short period of time
             final Label theLabel = this.pose;
             schedule(() -> {
@@ -209,6 +215,17 @@ public class MyoPresenter implements Initializable {
                     gesturePic.setImage(null);
                 });
             },500);
+
+
+           switch (pose){
+                case FIST:{ myoPose.onFist();break;}
+                case SPREAD:{myoPose.onFingersSpread();break;}
+                case LEFT: {myoPose.onWaveIn();break;}
+                case RIGHT: {myoPose.onWaveOut();break;}
+            }
+
+
+
 
         });
     }

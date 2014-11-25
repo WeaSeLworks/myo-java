@@ -39,6 +39,8 @@ dependencies{
     compile 'commons-codec:commons-codec:1.9'
     compile 'com.airhacks:afterburner.fx:1.6.0'
 
+   // compile 'com.github.weaselworks:ChromeDriver:1.0'
+
     //java-ml
     compile name: 'Jama-1.0.2'
     compile name: 'ajt-2.9'
@@ -46,6 +48,9 @@ dependencies{
     compile name: 'javaml-0.1.7'
     compile name: 'libsvm'
     compile name: 'weka'
+
+
+    compile name: 'ChromeDriver-1.0'
 
     testCompile 'junit:junit:4.11'
 }
