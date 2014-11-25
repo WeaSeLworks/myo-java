@@ -113,7 +113,6 @@ public class MyoApplication extends BGAPIDefaultListener
         } catch (InterruptedException ex) {
             logger.error("Unable to load the library",ex);
         }
-        logger.info("Requesting Version Number...");
     }
 
     public void onDeviceFound(Consumer<BDAddr> action) {
@@ -124,7 +123,7 @@ public class MyoApplication extends BGAPIDefaultListener
     }
 
     public void connect(String bluetoothAddress, Consumer<Integer> connectAction){
-        client.send_gap_connect_direct(BDAddr.fromString(bluetoothAddress), 0, 6, 6, 100, 0);
+        client.send_gap_connect_direct(BDAddr.fromString(bluetoothAddress), 0, 50, 100, 100, 0);
         this.connectAction = connectAction;
     }
 
@@ -158,17 +157,20 @@ public class MyoApplication extends BGAPIDefaultListener
         this.imuAction = imuAction;
         this.emgAction = emgAction;
         writeAttr(EMG, new byte[]{0x01, 0x00});
-        writeAttr(IMU, new byte[]{0x01, 0x00});
+        //writeAttr(IMU, new byte[]{0x01, 0x00});
         sendSettings();
     }
 
     private void sendSettings() throws ExecutionException, InterruptedException {
-        int C = 1000;
-        int emg_smooth = 100;
-        int imu_hz = 50;
+        int C = 500;
+        byte emg_smooth = 120;
+        byte imu_hz = 25;
+        int emg_hz = 25;
         //this is to get around the max value of a byte in java (2^7 -1)
-        byte E8 = 0; E8 ^= 0xE8;
-        byte[] sensorSettings2 = new byte[]{0x02, 0x09, 0x02, 0x01, E8, 0x03,  0x64, 0x14, 0x32, 0, 0};
+        //byte E8 = 0; E8 ^= 0xE8;
+        byte x = 0; x ^= 0b11110100;
+
+        byte[] sensorSettings2 = new byte[]{0x02, 0x09, 0x02, 0x01, x, 0x01,  emg_smooth, (byte)Math.round(C / emg_hz) , imu_hz, 0, 0};
 
         writeAttr(MYO_SENSOR_SETTINGS, sensorSettings2);
     }
@@ -245,7 +247,9 @@ public class MyoApplication extends BGAPIDefaultListener
         int ay = ((imuData[9] & 0xFF) << 8) + (imuData[8] & 0xFF); if (ay > (1<<15)) { ay = ay - (1<<16); }
         int az = ((imuData[11] & 0xFF) << 8) + (imuData[10] & 0xFF); if (az > (1<<15)) { az = az - (1<<16); }
 
-        imuAction.accept(new Integer[]{gx, gy, gz, ax, ay, az});
+        if (imuAction != null) {
+            imuAction.accept(new Integer[]{gx, gy, gz, ax, ay, az});
+        }
 
         logger.debug(String.format("IMU gx: %d  gy: %d  gz: %d  ax: %d  ay: %d  az: %d", gx, gy, gz, ax, ay, az));
     }
