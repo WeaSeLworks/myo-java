@@ -25,7 +25,6 @@ repositories {
      jcenter()
      maven { url "http://maven.thingml.org/thingml-release/" }
      maven {url 'http://www.sparetimelabs.com/maven2'}
-     maven {url 'http://dl.bintray.com/skone/maven/'}
      flatDir { dirs 'lib' }
 
 }
