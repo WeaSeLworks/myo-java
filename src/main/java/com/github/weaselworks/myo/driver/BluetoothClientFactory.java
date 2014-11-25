@@ -104,8 +104,20 @@ public class BluetoothClientFactory {
         if (possibilities.size() > 1) {
             startPosition = 1;
         }
+
+        //obviously this isn't fool proof but this is a hackathon
+        String OS = System.getProperty("os.name");
+        String port;
+        switch (OS) {
+            case "Linux" : port = "ttyACM0";
+                break;
+            case "Mac OS X"   : port = "tty.usbmodem1";
+                break;
+            default: port = "No-Port-Determined";
+        }
+
         //temporary hardcoding
-        return "/dev/tty.usbmodem1";
+        return String.format("/dev/%s", port);
 
         /*return (String) JOptionPane.showInputDialog(
                 null,
@@ -128,8 +140,9 @@ public class BluetoothClientFactory {
             switch (com.getPortType()) {
                 case CommPortIdentifier.PORT_SERIAL:
                     try {
-                        CommPort thePort = com.open("CommUtil", 50);
+                        CommPort thePort = com.open("CommUtil", 100);
                         thePort.close();
+                        logger.info("Port: "+thePort.getName());
                         h.add(com);
                     } catch (PortInUseException e) {
                         System.out.println("Port, " + com.getName() + ", is in use.");

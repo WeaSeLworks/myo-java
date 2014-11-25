@@ -1,12 +1,13 @@
 .bg {
 
-    -fx-background-image: url("Weaselworks-background.png");
+    -fx-background-image: url("Weaselworks-background-1024x768.png");
+    -fx-background-color: #000;
     -fx-background-size: cover, auto;
 }
 
 .bg-connected {
-
-    -fx-background-image: url("Weaselworks-background-connected.png");
+    -fx-background-color: #000;
+    -fx-background-image: url("Weaselworks-background-1024x768_on.png");
     -fx-background-size: cover, auto;
 }
 

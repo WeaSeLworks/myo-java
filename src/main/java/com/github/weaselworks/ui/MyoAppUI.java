@@ -8,6 +8,7 @@ import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+
 import javafx.stage.Stage;
 
 import java.net.URL;
@@ -19,8 +20,11 @@ public class MyoAppUI extends Application {
     @Override
     public void start(Stage primaryStage) throws Exception{
         appView = new MyoView();
+        
         Scene scene = new Scene(appView.getView());
-        primaryStage.setTitle("Hello World");
+       
+        primaryStage.setFullScreen(true);
+        primaryStage.setTitle("Weaselworks Hackathon");
         primaryStage.setScene(scene);
         primaryStage.show();
     }

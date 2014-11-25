@@ -22,6 +22,7 @@ import net.sf.javaml.core.Dataset;
 import net.sf.javaml.core.DefaultDataset;
 import net.sf.javaml.core.DenseInstance;
 import net.sf.javaml.core.Instance;
+import net.sf.javaml.tools.data.FileHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.thingml.bglib.BDAddr;
@@ -29,8 +30,8 @@ import org.thingml.bglib.BGAPI;
 import org.thingml.bglib.BGAPIDefaultListener;
 
 import javax.annotation.PreDestroy;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
 import java.util.concurrent.*;
@@ -66,6 +67,8 @@ public class MyoApplication extends BGAPIDefaultListener
     private Consumer<List<Integer>> emgAction;
     private Consumer<Pose> poseAction;
     private Classifier knn;
+    private Semaphore semaphore = new Semaphore(1);
+
 
 
 
@@ -92,13 +95,9 @@ public class MyoApplication extends BGAPIDefaultListener
 
     private Dataset loadDatasetFromPoseFile(String filename){
         Dataset newDataset = null;
-        try {
-            newDataset = loadDataset(new File(MyoApplication.class.getResource(String.format("/%s",filename)).toURI()), 8, ",");
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (URISyntaxException e) {
-            e.printStackTrace();
-        }
+        InputStream uri = MyoApplication.class.getResourceAsStream(String.format("/%s", filename));
+        logger.info("URI = "+uri.toString());
+        newDataset = FileHandler.load(new InputStreamReader(uri), 8, ",");
         return  newDataset;
     }
 
@@ -115,8 +114,6 @@ public class MyoApplication extends BGAPIDefaultListener
             logger.error("Unable to load the library",ex);
         }
         logger.info("Requesting Version Number...");
-        client.send_system_get_info();
-        client.send_system_hello();
     }
 
     public void onDeviceFound(Consumer<BDAddr> action) {
@@ -141,15 +138,27 @@ public class MyoApplication extends BGAPIDefaultListener
         client.send_attclient_read_by_handle(connection, 0x17);
     }
 
-    public BgapiWriteAttrFuture writeAttr(int handle, byte[] data) {
-        return new BgapiWriteAttrFuture(client, connection, handle, data);
+    public void writeAttr(int handle, byte[] data) {
+        try {
+            Thread.sleep(250);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        try {
+
+            client.send_attclient_attribute_write(connection, handle, data);
+            semaphore.acquire();
+
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
     public void subscribeMyoData(Consumer<Integer[]> imuAction, Consumer<List<Integer>> emgAction) throws ExecutionException, InterruptedException {
         this.imuAction = imuAction;
         this.emgAction = emgAction;
-        writeAttr(EMG, new byte[] {0x01, 0x00} ).get();
-        writeAttr(IMU, new byte[] {0x01, 0x00} ).get();
+        writeAttr(EMG, new byte[]{0x01, 0x00});
+        writeAttr(IMU, new byte[]{0x01, 0x00});
         sendSettings();
     }
 
@@ -161,7 +170,7 @@ public class MyoApplication extends BGAPIDefaultListener
         byte E8 = 0; E8 ^= 0xE8;
         byte[] sensorSettings2 = new byte[]{0x02, 0x09, 0x02, 0x01, E8, 0x03,  0x64, 0x14, 0x32, 0, 0};
 
-        writeAttr(MYO_SENSOR_SETTINGS, sensorSettings2).get();
+        writeAttr(MYO_SENSOR_SETTINGS, sensorSettings2);
     }
 
     @Override
@@ -287,7 +296,9 @@ public class MyoApplication extends BGAPIDefaultListener
     }
 
     @Override
-    public void receive_attclient_procedure_completed(int connection, int result, int chrhandle) {}
+    public void receive_attclient_procedure_completed(int connection, int result, int chrhandle) {
+        semaphore.release();
+    }
 
     @Override
     public void receive_system_reset() {

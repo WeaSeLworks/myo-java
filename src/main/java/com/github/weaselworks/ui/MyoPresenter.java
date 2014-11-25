@@ -123,9 +123,10 @@ public class MyoPresenter implements Initializable {
                         connectButton.setText("Disconnect");
                         connectionId = connId;
                         connectionStatus.setText(String.format("Connected [%s]", connId));
-                        imuData.setVisible(true);
+
                         schedule(() -> { subscribeToMyoData(); },1500);
                     });
+                    imuData.setVisible(true);
                     setLogoVisible(true);
                 });
             }
@@ -187,6 +188,7 @@ public class MyoPresenter implements Initializable {
                     if (neverConnected && connectionId < 0) {
                         deviceList.getSelectionModel().select(newDevice);
                         connectToSelected();
+                        imuData.setVisible(true);
                         neverConnected = false;
                     }
                 }

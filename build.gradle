@@ -9,7 +9,6 @@ apply from: "http://dl.bintray.com/content/shemnon/javafx-gradle/0.4.0/javafx.pl
 
 group = 'com.github.weaselworks.myo'
 version = '0.0.1'
-
 description = 'Myo Java API'
 
 sourceCompatibility = 1.8
@@ -54,32 +53,51 @@ dependencies{
 
 // Configures plugin
 javafx {
-    // Points to JDK and its JavaFX libraries, also declares target runtime JDK
-    javaRuntime = '/Library/Java/JavaVirtualMachines/jdk1.8.0_05.jdk'
 
 
-    // Application name and ID presented by target OS
-    appID 'HelloWorldApp'
-    appName 'Hello World Application'
+    profiles {
 
-    // Main class of application
-    mainClass 'com.github.weaselworks.ui.MyoAppUI'
 
-    // JVM arguments, system properties, application command line arguments
-    jvmArgs = ['-XX:+AggressiveOpts', '-XX:CompileThreshold=1']
-    systemProperties = ['prism.disableRegionCaching':'true']
-    arguments = ['-l', '--fast']
+        linux {
 
-    // Keystore credentials for signing JAR
-    // Generate key: keytool -genkey -alias release -keyalg RSA -keystore keystore.jks -keysize 2048
-    releaseKey {
-        alias = 'release'
-        keyPass = getProjectProperty('keyStorePassword')
-        keyStore = file("${System.properties['user.home']}/keystore/keystore.jks")
-        storePass = getProjectProperty('storePassword')
+            // Points to JDK and its JavaFX libraries, also declares target runtime JDK
+            javaRuntime = '/Library/Java/JavaVirtualMachines/jdk1.8.0_05.jdk'
+
+
+            // Application name and ID presented by target OS
+            appID 'happinesMyo'
+            appName 'happiness-myo'
+
+            // Main class of application
+            mainClass 'com.github.weaselworks.ui.MyoAppUI'
+
+            // JVM arguments, system properties, application command line arguments
+            jvmArgs = ['-XX:+AggressiveOpts', '-XX:CompileThreshold=1']
+            systemProperties = ['prism.disableRegionCaching':'true']
+            arguments = ['-l', '--fast']
+
+            // Keystore credentials for signing JAR
+            // Generate key: keytool -genkey -alias release -keyalg RSA -keystore keystore.jks -keysize 2048
+            releaseKey {
+                alias = 'selfsigned'
+                keyPass = "${System.properties['keystorePassword']}"
+                keyStore = file("${System.properties['user.home']}/myo-keystore/myo.jks")
+                storePass = "${System.properties['keystorePassword']}"
+            }
+
+            signingMode 'release'
+            // linux doesn't care about id, it goes un-used at the moment
+            category = 'Development'
+            // good luck finding a standard location for the JDK
+            //javaRuntime = '/usr/lib/jvm/java-7-oracle'
+
+            bundleArguments = [
+                    // for DEB bundles
+                    'email' : 'support@example.com', // This is the email used for the deb maintainer field.
+            ]
+        }
     }
 
-    signingMode 'release'
 
     // ...
 }
