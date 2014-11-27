@@ -66,9 +66,9 @@ javafx {
         linux {
 
             // Points to JDK and its JavaFX libraries, also declares target runtime JDK
-            javaRuntime = '/Library/Java/JavaVirtualMachines/jdk1.8.0_05.jdk'
+            //javaRuntime = '/Library/Java/JavaVirtualMachines/jdk1.8.0_05.jdk'
 
-
+            embedLauncher = false
             // Application name and ID presented by target OS
             appID 'happinesMyo'
             appName 'happiness-myo'
@@ -94,7 +94,7 @@ javafx {
             // linux doesn't care about id, it goes un-used at the moment
             category = 'Development'
             // good luck finding a standard location for the JDK
-            //javaRuntime = '/usr/lib/jvm/java-7-oracle'
+            javaRuntime = '/usr/java/latest'
 
             bundleArguments = [
                     // for DEB bundles
