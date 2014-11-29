@@ -1,11 +1,8 @@
 apply plugin: 'java'
 apply plugin: 'maven'
 apply plugin: 'idea'
-apply from: "http://dl.bintray.com/content/shemnon/javafx-gradle/0.4.0/javafx.plugin"
+apply from: "javafx.plugin"
 
-//apply plugin:'application'
-
-//mainClassName = "com.github.weaselworks.myo.driver.MyoApplication"
 
 group = 'com.github.weaselworks.myo'
 version = '0.0.1'
@@ -18,7 +15,7 @@ configurations.all {
 }
 
 repositories {
-        
+     maven { url "http://nexus:8081/nexus/content/groups/public"}
      maven { url "https://oss.sonatype.org/content/repositories/snapshots" }
      maven { url "http://repo.maven.apache.org/maven2" }
      jcenter()
@@ -28,7 +25,7 @@ repositories {
 
 }
 
-dependencies{
+dependencies {
     compile 'org.slf4j:slf4j-api:1.7.5'
     compile 'org.slf4j:slf4j-simple:1.7.5'
     compile 'org.thingml:bglib-protocol-1.0.3-43:1.1.0'
