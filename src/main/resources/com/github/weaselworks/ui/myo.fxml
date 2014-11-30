@@ -54,4 +54,11 @@
          </children>
       </StackPane>
    </center>
+   <left>
+      <VBox alignment="TOP_CENTER" prefHeight="200.0" prefWidth="100.0" BorderPane.alignment="CENTER">
+         <children>
+            <Button fx:id="sync" mnemonicParsing="false" onAction="#sync" prefHeight="26.0" prefWidth="100.0" text="Sync" />
+         </children>
+      </VBox>
+   </left>
 </BorderPane>

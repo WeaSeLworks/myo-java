@@ -6,6 +6,7 @@ import com.github.weaselworks.myo.driver.Pose;
 import javafx.application.Platform;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
+import javafx.event.EventType;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Button;
@@ -57,6 +58,9 @@ public class MyoPresenter implements Initializable {
     private Label connectionStatus;
 
     @FXML
+    private Button sync;
+
+    @FXML
     private ListView<BluetoothDevice> deviceList;
 
     @FXML
@@ -79,6 +83,12 @@ public class MyoPresenter implements Initializable {
 
     @Inject
     private MyoApplication myo;
+
+    @FXML
+    public void sync() {
+        logger.info("syncing to chrome");
+        connectToChromeBrowser();
+    }
 
 
     private void subscribeToMyoData()  {
@@ -127,11 +137,13 @@ public class MyoPresenter implements Initializable {
                         connectButton.setText("Disconnect");
                         connectionId = connId;
                         connectionStatus.setText(String.format("Connected [%s]", connId));
-
-                        schedule(() -> { subscribeToMyoData(); },1500);
+                        imuData.setVisible(true);
+                        setLogoVisible(true);
+                        sync.setDisable(false);
                     });
-                    imuData.setVisible(true);
-                    setLogoVisible(true);
+                    schedule(() -> { subscribeToMyoData(); },1500);
+                    connectToChromeBrowser();
+
                 });
             }
         }
@@ -143,11 +155,18 @@ public class MyoPresenter implements Initializable {
                     connectionStatus.setText("Status: Idle");
                     deviceList.getSelectionModel().clearSelection();
                     imuData.setVisible(false);
+                    setLogoVisible(false);
+                    sync.setDisable(true);
                 });
-                setLogoVisible(false);
+
+
             });
         }
 
+    }
+
+    private void connectToChromeBrowser() {
+        myoPose = new Debugger("chromebrowser.local",9222);
     }
 
 
@@ -163,12 +182,13 @@ public class MyoPresenter implements Initializable {
     public void initialize(URL location, ResourceBundle resources) {
 
         myo.start();
-        myoPose = new Debugger("chromebrowser.local",9222);
+
         ObservableList<BluetoothDevice> devices = deviceList.getItems();
         images.put(Pose.FIST, new Image("com/github/weaselworks/ui/Fist.png"));
         images.put(Pose.SPREAD, new Image("com/github/weaselworks/ui/Spread.png"));
         images.put(Pose.LEFT, new Image("com/github/weaselworks/ui/Left.png"));
         images.put(Pose.RIGHT, new Image("com/github/weaselworks/ui/Right.png"));
+        sync.setDisable(true);
 
 
         deviceList.setCellFactory(cellData -> {
@@ -216,17 +236,14 @@ public class MyoPresenter implements Initializable {
                 });
             },500);
 
-
-           switch (pose){
-                case FIST:{ myoPose.onFist();break;}
-                case SPREAD:{myoPose.onFingersSpread();break;}
-                case LEFT: {myoPose.onWaveIn();break;}
-                case RIGHT: {myoPose.onWaveOut();break;}
+            if (myoPose != null) {
+                switch (pose){
+                    case FIST:{ myoPose.onFist();break;}
+                    case SPREAD:{myoPose.onFingersSpread();break;}
+                    case LEFT: {myoPose.onWaveIn();break;}
+                    case RIGHT: {myoPose.onWaveOut();break;}
+                }
             }
-
-
-
-
         });
     }
 

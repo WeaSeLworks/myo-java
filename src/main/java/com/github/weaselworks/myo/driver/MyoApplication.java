@@ -157,7 +157,7 @@ public class MyoApplication extends BGAPIDefaultListener
         this.imuAction = imuAction;
         this.emgAction = emgAction;
         writeAttr(EMG, new byte[]{0x01, 0x00});
-        //writeAttr(IMU, new byte[]{0x01, 0x00});
+        writeAttr(IMU, new byte[]{0x01, 0x00});
         sendSettings();
     }
 
