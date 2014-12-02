@@ -237,11 +237,27 @@ public class MyoPresenter implements Initializable {
             },500);
 
             if (myoPose != null) {
-                switch (pose){
-                    case FIST:{ myoPose.onFist();break;}
-                    case SPREAD:{myoPose.onFingersSpread();break;}
-                    case LEFT: {myoPose.onWaveIn();break;}
-                    case RIGHT: {myoPose.onWaveOut();break;}
+                try {
+                    switch (pose) {
+                        case FIST: {
+                            myoPose.onFist();
+                            break;
+                        }
+                        case SPREAD: {
+                            myoPose.onFingersSpread();
+                            break;
+                        }
+                        case LEFT: {
+                            myoPose.onWaveIn();
+                            break;
+                        }
+                        case RIGHT: {
+                            myoPose.onWaveOut();
+                            break;
+                        }
+                    }
+                }catch (RuntimeException e) {
+                    logger.error(e.getMessage());
                 }
             }
         });
