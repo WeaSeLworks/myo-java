@@ -131,7 +131,7 @@ public class MyoPresenter implements Initializable {
         BluetoothDevice selectedDevice = deviceList.getSelectionModel()
                 .getSelectedItem();
         if (!isConnected()) {
-            if (selectedDevice != null) {
+            if (selectedDevice != null && selectedDevice.isMyo()) {
                 myo.connect(selectedDevice.getAddress().toString(), connId -> {
                     Platform.runLater(() -> {
                         connectButton.setText("Disconnect");
@@ -142,7 +142,7 @@ public class MyoPresenter implements Initializable {
                         sync.setDisable(false);
                     });
                     schedule(() -> { subscribeToMyoData(); },1500);
-                    connectToChromeBrowser();
+                    //connectToChromeBrowser();
 
                 });
             }
@@ -236,6 +236,7 @@ public class MyoPresenter implements Initializable {
                 });
             },500);
 
+            Platform.runLater(() -> {
             if (myoPose != null) {
                 try {
                     switch (pose) {
@@ -256,10 +257,11 @@ public class MyoPresenter implements Initializable {
                             break;
                         }
                     }
-                }catch (RuntimeException e) {
+                } catch (RuntimeException e) {
                     logger.error(e.getMessage());
                 }
-            }
+                }
+            });
         });
     }
 

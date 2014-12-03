@@ -123,7 +123,7 @@ public class MyoApplication extends BGAPIDefaultListener
     }
 
     public void connect(String bluetoothAddress, Consumer<Integer> connectAction){
-        client.send_gap_connect_direct(BDAddr.fromString(bluetoothAddress), 0, 50, 100, 100, 0);
+        client.send_gap_connect_direct(BDAddr.fromString(bluetoothAddress), 0, 100, 200, 100, 0);
         this.connectAction = connectAction;
     }
 
@@ -157,20 +157,23 @@ public class MyoApplication extends BGAPIDefaultListener
         this.imuAction = imuAction;
         this.emgAction = emgAction;
         writeAttr(EMG, new byte[]{0x01, 0x00});
-        writeAttr(IMU, new byte[]{0x01, 0x00});
+        //writeAttr(IMU, new byte[]{0x01, 0x00});
         sendSettings();
     }
 
     private void sendSettings() throws ExecutionException, InterruptedException {
-        int C = 500;
+        int C = 350;
         byte emg_smooth = 120;
         byte imu_hz = 25;
         int emg_hz = 25;
         //this is to get around the max value of a byte in java (2^7 -1)
         //byte E8 = 0; E8 ^= 0xE8;
-        byte x = 0; x ^= 0b11110100;
+        byte x = 0; x ^= 0b11110100; // 500
+        byte y = 0; y ^= 0b10010000; //400
+        byte z = 0; z ^= 0b01011110; //350
 
-        byte[] sensorSettings2 = new byte[]{0x02, 0x09, 0x02, 0x01, x, 0x01,  emg_smooth, (byte)Math.round(C / emg_hz) , imu_hz, 0, 0};
+
+        byte[] sensorSettings2 = new byte[]{0x02, 0x09, 0x02, 0x01, z, 0x01,  emg_smooth, (byte)Math.round(C / emg_hz) , imu_hz, 0, 0};
 
         writeAttr(MYO_SENSOR_SETTINGS, sensorSettings2);
     }
